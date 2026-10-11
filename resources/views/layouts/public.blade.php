@@ -5,6 +5,7 @@
         ['label' => 'Início', 'href' => route('home')],
         ['label' => 'Promoções', 'href' => route('home').'#promocoes'],
         ['label' => 'Como funciona', 'href' => route('home').'#como-funciona'],
+        ['label' => 'Consultar pedido', 'href' => route('orders.lookup')],
     ];
     $organizer = ['name' => \App\Models\Setting::read('organizer_name'), 'document' => \App\Models\Setting::read('organizer_document'), 'city' => \App\Models\Setting::read('organizer_city')];
     $contact = ['email' => \App\Models\Setting::read('contact_email'), 'whatsapp' => \App\Models\Setting::read('contact_whatsapp')];
@@ -20,7 +21,7 @@
             Pular para o conteúdo
         </a>
 
-        <header class="border-b bg-cartao/90 backdrop-blur">
+        <header class="border-b bg-cartao/90 backdrop-blur print:hidden">
             <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
                 <x-brand />
 
@@ -35,7 +36,7 @@
                         @can('access-admin')
                             <a href="{{ url('/admin') }}" class="rounded-md px-3 py-2 font-semibold hover:underline">Painel</a>
                         @endcan
-                        <a href="{{ route('dashboard') }}" class="btn btn-secondary">Minha conta</a>
+                        <a href="{{ route('dashboard') }}" class="btn btn-secondary">Minhas compras</a>
                     @else
                         <a href="{{ route('login') }}" class="rounded-md px-3 py-2 font-semibold hover:underline">Entrar</a>
                         @if (Route::has('register'))
@@ -58,7 +59,7 @@
                         </nav>
                         <div class="mt-2 grid gap-2 border-t pt-3">
                             @auth
-                                <a href="{{ route('dashboard') }}" class="btn btn-secondary">Minha conta</a>
+                                <a href="{{ route('dashboard') }}" class="btn btn-secondary">Minhas compras</a>
                             @else
                                 <a href="{{ route('login') }}" class="btn btn-secondary">Entrar</a>
                                 @if (Route::has('register'))
@@ -75,7 +76,7 @@
             {{ $slot }}
         </main>
 
-        <footer class="mt-24 border-t bg-cartao">
+        <footer class="mt-24 border-t bg-cartao print:hidden">
             <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
                 <div class="space-y-3">
                     <x-brand />

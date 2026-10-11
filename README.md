@@ -119,6 +119,16 @@ Gere o Pix pela página do pedido e, no painel do sandbox do Asaas, abra a cobra
 
 Em Asaas > Integrações > Webhooks: URL `https://SEU-SUBDOMINIO/webhooks/asaas`, versão v3, fila de sincronização ativada, tipo de envio sequencial, e os eventos de **cobranças** (todos os `PAYMENT_*`). Clique em **Gerar Token** e copie o mesmo valor para `ASAAS_WEBHOOK_TOKEN` no `.env` do servidor. O sistema trata avisos repetidos e fora de ordem, e sempre consulta a cobrança no Asaas antes de agir.
 
+## Comprovantes, área do participante e e-mails
+
+- **Comprovante** (gerado quando o pagamento é confirmado):
+  - `/comprovante/{código}`: verificação pública. Mostra promoção, responsável, pedido, números, valores, forma e situação do pagamento, data da confirmação e QR Code. O nome aparece abreviado ("Maria S.") e nunca há CPF, e-mail ou telefone.
+  - `/pedido/{código}/comprovante`: versão do comprador, com nome completo, botão de imprimir e PDF.
+  - Tudo é montado a partir do banco: editar o PDF ou o HTML não muda o que a verificação mostra. Pedido reembolsado aparece como "não é mais válido".
+- **Minhas compras** (`/dashboard`): pedidos feitos logado e os feitos como convidado com o mesmo e-mail, se o e-mail da conta estiver confirmado.
+- **Consultar pedido** (`/consultar-pedido`): código + e-mail; o link de acesso vai por e-mail. A resposta é sempre a mesma, exista ou não o pedido.
+- **E-mails**: "números reservados" (ao confirmar os dados), "pagamento confirmado" e "link do pedido". São enviados depois que a página já respondeu e nunca interrompem o pagamento se o envio falhar. Em desenvolvimento ficam em `storage/logs/laravel.log` (`MAIL_MAILER=log`); em produção, configure o SMTP no `.env` (Fase 8).
+
 ## Produção
 
 O roteiro de deploy na HostGator (SSH, subdomínio, cron, SSL) será documentado na Fase 8. Nunca rode `db:seed` em produção: o seeder recusa esse ambiente.

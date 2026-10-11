@@ -50,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('numbers-status', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         // Páginas de pedido: limita tentativas de adivinhar códigos.
         RateLimiter::for('orders', fn (Request $request) => Limit::perMinute(30)->by($who($request)));
+        // Consulta de pedido por e-mail: poucas tentativas, para não virar ferramenta de envio de spam.
+        RateLimiter::for('order-lookup', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         // A página do pedido consulta a situação a cada 5 s.
         RateLimiter::for('order-status', fn (Request $request) => Limit::perMinute(30)->by($who($request)));
     }

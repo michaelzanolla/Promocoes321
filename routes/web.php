@@ -3,8 +3,12 @@
 use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\NumberSelectionController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderLookupController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\ReceiptController;
+use App\Models\Order;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'site.home')->name('home');
@@ -27,11 +31,23 @@ Route::post('pedido/{code}/cancelar', [OrderController::class, 'cancel'])->middl
 Route::post('pedido/{code}/pagamento', [OrderController::class, 'pay'])->middleware('throttle:orders')->name('orders.pay');
 Route::get('pedido/{code}/situacao', [OrderController::class, 'status'])->middleware('throttle:order-status')->name('orders.status');
 
+// Comprovante: verificação pública (sem dados pessoais) e versão do comprador (página e PDF).
+Route::get('comprovante/{receiptCode}', [ReceiptController::class, 'verify'])->middleware('throttle:orders')->name('receipts.verify');
+Route::get('pedido/{code}/comprovante', [ReceiptController::class, 'show'])->middleware('throttle:orders')->name('orders.receipt');
+Route::get('pedido/{code}/comprovante.pdf', [ReceiptController::class, 'pdf'])->middleware('throttle:orders')->name('orders.receipt.pdf');
+
+// Consulta de pedido para quem comprou sem conta (o link vai por e-mail).
+Route::get('consultar-pedido', [OrderLookupController::class, 'create'])->name('orders.lookup');
+Route::post('consultar-pedido', [OrderLookupController::class, 'store'])->middleware('throttle:order-lookup')->name('orders.lookup.store');
+
 // Avisos do provedor de pagamento (sem CSRF; autenticados pelo token do webhook).
 Route::post('webhooks/asaas', AsaasWebhookController::class)->name('webhooks.asaas');
 
+// Área do participante: "Minhas compras" (pedidos feitos logado ou com o mesmo e-mail confirmado).
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', fn (Request $request) => view('site.my-orders', [
+        'orders' => Order::visibleTo($request->user())->with('promotion', 'items')->latest('id')->get(),
+    ]))->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

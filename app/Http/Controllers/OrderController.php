@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Mail\OrderMail;
 use App\Models\Order;
 use App\Payments\PaymentGateway;
 use App\Payments\PaymentGatewayException;
@@ -66,6 +67,8 @@ class OrderController extends Controller
             'payment_method' => PaymentMethod::from($data['payment_method']),
             'terms_accepted_at' => now(),
         ])->save();
+
+        $order->sendMailLater(OrderMail::RESERVED);
 
         return redirect()->route('orders.show', $order->public_code)->with('status', 'Dados confirmados.');
     }

@@ -4,6 +4,7 @@ namespace App\Payments;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Mail\OrderMail;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -126,6 +127,8 @@ class SyncPayment
             'confirmed_at' => now(),
             'receipt_code' => $order->receipt_code ?? $this->newReceiptCode(),
         ])->save();
+
+        DB::afterCommit(fn () => $order->sendMailLater(OrderMail::CONFIRMED));
     }
 
     /** Números de pedido reembolsado continuam presos: não voltam à venda sozinhos. */

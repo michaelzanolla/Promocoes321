@@ -30,7 +30,7 @@ class ReserveNumbers
 
     /**
      * @param  list<int>  $numbers
-     * @return array{order: Order, token: string} token: segredo de acesso ao pedido (só o hash fica no banco)
+     * @return array{order: Order, token: string} token: segredo do link de acesso ao pedido (guardado criptografado)
      *
      * @throws DomainException quando o pedido é inválido
      * @throws NumbersUnavailable quando algum número já foi reservado ou vendido
@@ -59,7 +59,7 @@ class ReserveNumbers
                 $order = new Order;
                 $order->forceFill([
                     'public_code' => $this->newPublicCode(),
-                    'access_token_hash' => hash('sha256', $token),
+                    'access_token' => $token,
                     'checkout_key' => $checkoutKey,
                     'promotion_id' => $promotion->id,
                     'user_id' => $user?->id,
@@ -172,8 +172,7 @@ class ReserveNumbers
     {
         $order = Order::where('checkout_key', $checkoutKey)->where('promotion_id', $promotion->id)->first();
 
-        // O token original não é recuperável (só o hash fica salvo); o acesso já está na sessão de quem criou.
-        return $order ? ['order' => $order, 'token' => ''] : null;
+        return $order ? ['order' => $order, 'token' => (string) $order->access_token] : null;
     }
 
     private function isDuplicateKey(QueryException $e): bool

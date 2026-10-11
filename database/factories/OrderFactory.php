@@ -17,7 +17,7 @@ class OrderFactory extends Factory
     {
         return [
             'public_code' => Str::upper(Str::random(10)),
-            'access_token_hash' => hash('sha256', Str::random(40)),
+            'access_token' => Str::random(40),
             'checkout_key' => (string) Str::uuid(),
             'promotion_id' => Promotion::factory()->open(),
             'buyer_name' => fake()->name(),

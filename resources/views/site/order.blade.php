@@ -238,6 +238,12 @@
             <section class="mt-8 rounded-(--radius-bilhete) border-2 border-ok bg-ok-claro p-6" role="status">
                 <h2 class="font-display text-xl text-ok">Pagamento confirmado</h2>
                 <p class="mt-2">Confirmado em {{ $order->confirmed_at->format('d/m/Y \à\s H:i') }} (horário de Brasília). Seus números estão garantidos.</p>
+                @if ($order->receipt_code)
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('orders.receipt', $order->public_code) }}" class="btn btn-primary">Ver comprovante</a>
+                        <a href="{{ route('orders.receipt.pdf', $order->public_code) }}" class="btn btn-secondary">Baixar PDF</a>
+                    </div>
+                @endif
             </section>
         @elseif ($order->status === OrderStatus::NeedsReview)
             <section class="mt-8 rounded-(--radius-bilhete) border bg-talao-claro p-6" role="status">
