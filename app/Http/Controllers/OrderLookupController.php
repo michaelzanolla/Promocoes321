@@ -25,7 +25,7 @@ class OrderLookupController extends Controller
         $data = $request->validate([
             'code' => ['required', 'string', 'max:20'],
             'email' => ['required', 'email', 'max:255'],
-        ]);
+        ], [], ['code' => 'código do pedido']);
 
         $order = Order::where('public_code', mb_strtoupper(trim($data['code'])))
             ->where('buyer_email', mb_strtolower(trim($data['email'])))

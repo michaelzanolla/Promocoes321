@@ -15,13 +15,14 @@ class PublicPagesTest extends TestCase
 
     public function test_home_lists_open_promotions_from_the_database(): void
     {
-        Promotion::factory()->open()->create(['title' => 'Bicicleta aro 29']);
+        Promotion::factory()->open()->create(['title' => 'Bicicleta aro 29', 'slug' => 'bicicleta-aro-29']);
         Promotion::factory()->create(['title' => 'Rascunho secreto']);
         Promotion::factory()->create(['title' => 'Promoção cancelada', 'status' => PromotionStatus::Cancelled]);
 
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('Bicicleta aro 29')
+            ->assertSee('href="'.url('promocoes/bicicleta-aro-29').'"', false)
             ->assertDontSee('Rascunho secreto')
             ->assertDontSee('Promoção cancelada');
     }

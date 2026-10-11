@@ -4,12 +4,24 @@ Atualizado em 2026-10-11. Para retomar, leia este arquivo, o [README](../README.
 
 ## Onde paramos
 
-**A Fase 7 está concluída e commitada** na branch `fase-7-comprovantes`.
+**A Fase 8 está em andamento** na branch `fase-8-producao` (criada a partir da `fase-7-comprovantes`).
+
+Feito na Fase 8 até agora (commitado na branch `fase-8-producao`):
+
+- PDF do comprovante conferido; ajustado o espaçamento de "Números confirmados".
+- `deploy/deploy.sh` (deploy por SSH a partir do PC, sem Node/Composer no servidor; testada a montagem do pacote), `deploy/backup.sh` (mysqldump diário, 7 dias) e `deploy/env.production.example`.
+- `public/.htaccess`: redireciona para HTTPS (exceto `.well-known`) e envia cabeçalhos de segurança.
+- README: roteiro de produção (SSH, cPanel, `.env`, deploy, rollback, cron, backup, webhook) e checklist de publicação.
+- Chave SSH gerada (`~/.ssh/hostgator`) e cadastrada no cPanel; `~/.ssh/config` com Host `promocoes` (promocoes.osrv.com.br, usuário jonesa50, porta 2222). A autenticação funciona, mas o shell está desativado na conta: **chamado aberto na HostGator** para ativar o SSH (e confirmar porta, PHP 8.3 da linha de comando e `mysqldump`).
+- Revisão de segurança: upload de imagem não aceita mais SVG (podia levar script); cache de configuração com permissão 600 no deploy; README orienta guardar a `APP_KEY` fora da HostGator (sem ela, os CPFs do backup não são recuperáveis). `composer audit` limpo.
+- Revisão de acessibilidade (axe-core, WCAG 2.1 AA, todas as páginas públicas): login/cadastro ganharam `<main>`; formulários do pedido e de consulta marcam campos com erro (`aria-invalid`) e mostram nomes de campo em português; grade de números com uma parada só no Tab e navegação por setas/Home/End. Sem rolagem horizontal em 375 px.
+- Dependências npm: `overrides` força `tinypool` 2.1.2 (vulnerabilidade crítica no 2.1.0, usado pelo `vite-plus` 0.3.0). A 0.3.3 do `vite-plus` exige migrar o Vite para o núcleo dele (`vp migrate`); ao fazer isso, remover o `overrides`. `npm audit`: 0.
+- Testes ponta a ponta com Playwright (`npm run test:e2e`, 4 testes): compra até os dados confirmados e desistência, erros do formulário, disputa do mesmo número e teclado na grade. Acharam um bug da Fase 3: o cartão da página inicial levava para `/promocoes/{id}` (404); corrigido e coberto também no PHPUnit.
 
 Próximo passo ao retomar:
 
-1. Conferir o visual do PDF do comprovante (pendência da Fase 7).
-2. Iniciar a **Fase 8 — Preparação para produção** (escopo abaixo).
+1. **Aguardando a HostGator** ativar o shell SSH. Depois: testar `ssh promocoes`, conferir `php -v` e `mysqldump`. Subdomínio: promocoes.osrv.com.br (já existe, mesmo servidor); a raiz do documento ainda precisa apontar para `promocoes/public`.
+2. Primeiro deploy no sandbox, seguindo o README.
 
 ## Situação das fases
 
@@ -21,8 +33,8 @@ Próximo passo ao retomar:
 | 4 — Painel administrativo (Filament) | Concluída | `fase-4-admin` · `d0c6fb3` |
 | 5 — Seleção de números, reserva e checkout | Concluída | `fase-5-checkout` · `72ed127` |
 | 6 — Pagamentos (Asaas: Pix e cartão) | Concluída | `fase-6-pagamentos` · `666eca8` |
-| 7 — Comprovantes, área do participante, e-mails | Concluída | `fase-7-comprovantes` (último commit) |
-| 8 — Preparação para produção | **Não iniciada** | — |
+| 7 — Comprovantes, área do participante, e-mails | Concluída | `fase-7-comprovantes` · `d24e663` |
+| 8 — Preparação para produção | **Em andamento** | `fase-8-producao` |
 
 Cada branch foi criada a partir da anterior. A `main` ainda não tem commits; as fases ficam empilhadas até decidirmos como integrar.
 
@@ -49,7 +61,7 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 ### Fase 5 — Reserva e checkout
 
 - [ ] `composer test` falha no `ConcurrencyTest` **só neste ambiente** (limite de ~34 processos por comando). Rodar `php artisan test` separado do Pint/PHPStan. Na máquina do usuário deve funcionar.
-- [ ] Grade de números: navegação por setas do teclado (hoje só Tab, longo em grades de 500; a busca ajuda).
+- [x] Grade de números: navegação por setas do teclado (feito na Fase 8).
 - [ ] Não há limite de pedidos abertos por pessoa: alguém poderia tentar segurar muitos números. Há limite por pedido e de 10 reservas por minuto.
 - [ ] Não dá para trocar a forma de pagamento depois de confirmar os dados (é preciso desistir do pedido e reservar de novo).
 
@@ -61,7 +73,7 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 
 ### Fase 7 — Comprovantes e e-mails
 
-- [ ] Abrir um PDF de comprovante e conferir o visual (não foi possível renderizar como imagem no ambiente de desenvolvimento). Ex.: pedido de teste `V8STAKRACZ` > Baixar PDF.
+- [x] PDF do comprovante conferido (Fase 8).
 - [ ] SMTP de produção não configurado (Fase 8). Em desenvolvimento os e-mails vão para `storage/logs/laravel.log`.
 
 ## Escopo da Fase 8 — Preparação para produção

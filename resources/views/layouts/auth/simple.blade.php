@@ -4,7 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-papel">
-        <div class="flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-10">
+        <main class="flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-10">
             <div class="flex w-full max-w-sm flex-col gap-6">
                 <x-brand class="self-center" wire:navigate />
 
@@ -17,7 +17,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
 
         @persist('toast')
             <flux:toast.group>

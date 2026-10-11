@@ -18,7 +18,9 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -81,6 +83,17 @@ class AdminPanelTest extends TestCase
         $this->assertSame(PromotionStatus::Draft, $promotion->status);
         $this->assertSame($this->admin->id, $promotion->created_by);
         $this->assertDatabaseHas('audit_logs', ['action' => 'promotion.created', 'subject_id' => $promotion->id]);
+    }
+
+    public function test_promotion_image_rejects_svg(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->admin);
+
+        Livewire::test(CreatePromotion::class)
+            ->fillForm(['image_path' => UploadedFile::fake()->createWithContent('x.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')])
+            ->call('create')
+            ->assertHasFormErrors(['image_path']);
     }
 
     public function test_locked_fields_are_disabled_once_there_are_orders(): void

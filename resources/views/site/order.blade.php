@@ -125,17 +125,17 @@
 
                     <label class="grid gap-1 text-sm font-medium sm:col-span-2">
                         Nome completo
-                        <input name="buyer_name" required autocomplete="name" value="{{ old('buyer_name', $order->buyer_name ?? $user?->name) }}" class="{{ $field }}" aria-describedby="erro-nome">
+                        <input name="buyer_name" required autocomplete="name" value="{{ old('buyer_name', $order->buyer_name ?? $user?->name) }}" class="{{ $field }}" aria-describedby="erro-nome" @error('buyer_name') aria-invalid="true" @enderror>
                         @error('buyer_name') <span id="erro-nome" class="text-carimbo">{{ $message }}</span> @enderror
                     </label>
                     <label class="grid gap-1 text-sm font-medium">
                         E-mail
-                        <input name="buyer_email" type="email" required autocomplete="email" value="{{ old('buyer_email', $order->buyer_email ?? $user?->email) }}" class="{{ $field }}" aria-describedby="erro-email">
+                        <input name="buyer_email" type="email" required autocomplete="email" value="{{ old('buyer_email', $order->buyer_email ?? $user?->email) }}" class="{{ $field }}" aria-describedby="erro-email" @error('buyer_email') aria-invalid="true" @enderror>
                         @error('buyer_email') <span id="erro-email" class="text-carimbo">{{ $message }}</span> @enderror
                     </label>
                     <label class="grid gap-1 text-sm font-medium">
                         CPF
-                        <input name="buyer_cpf" required inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" value="{{ old('buyer_cpf') }}" class="num {{ $field }}" aria-describedby="erro-cpf">
+                        <input name="buyer_cpf" required inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" value="{{ old('buyer_cpf') }}" class="num {{ $field }}" aria-describedby="erro-cpf" @error('buyer_cpf') aria-invalid="true" @enderror>
                         @error('buyer_cpf') <span id="erro-cpf" class="text-carimbo">{{ $message }}</span> @enderror
                     </label>
                     <label class="grid gap-1 text-sm font-medium">
@@ -143,7 +143,7 @@
                         <input name="buyer_phone" type="tel" autocomplete="tel" value="{{ old('buyer_phone', $order->buyer_phone ?? $user?->phone) }}" class="{{ $field }}">
                     </label>
 
-                    <fieldset class="sm:col-span-2">
+                    <fieldset class="sm:col-span-2" aria-describedby="erro-pagamento">
                         <legend class="text-sm font-medium">Forma de pagamento</legend>
                         <div class="mt-2 flex flex-wrap gap-3">
                             @foreach ($methods as $method)
@@ -153,14 +153,14 @@
                                 </label>
                             @endforeach
                         </div>
-                        @error('payment_method') <p class="mt-1 text-sm text-carimbo">{{ $message }}</p> @enderror
+                        @error('payment_method') <p id="erro-pagamento" class="mt-1 text-sm text-carimbo">{{ $message }}</p> @enderror
                     </fieldset>
 
                     <label class="flex items-start gap-3 text-sm sm:col-span-2">
-                        <input type="checkbox" name="accept_terms" value="1" required class="mt-1 size-4" @checked(old('accept_terms'))>
+                        <input type="checkbox" name="accept_terms" value="1" required class="mt-1 size-4" aria-describedby="erro-termos" @error('accept_terms') aria-invalid="true" @enderror @checked(old('accept_terms'))>
                         <span>Li e aceito as <a href="{{ route('promotions.show', $promotion->slug) }}#titulo-regras" target="_blank" class="underline">regras da promoção</a> e os <a href="{{ route('pages.show', 'termos-de-uso') }}" target="_blank" class="underline">termos de uso</a>.</span>
                     </label>
-                    @error('accept_terms') <p class="-mt-3 text-sm text-carimbo sm:col-span-2">{{ $message }}</p> @enderror
+                    @error('accept_terms') <p id="erro-termos" class="-mt-3 text-sm text-carimbo sm:col-span-2">{{ $message }}</p> @enderror
 
                     <div class="sm:col-span-2">
                         <button type="submit" class="btn btn-primary">Confirmar dados</button>

@@ -38,6 +38,9 @@ class PromotionResource extends Resource
 {
     protected static ?string $model = Promotion::class;
 
+    /** Sem SVG: um SVG enviado pode conter script e é servido pelo próprio site. */
+    public const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
     protected static ?string $recordTitleAttribute = 'title';
@@ -74,11 +77,11 @@ class PromotionResource extends Resource
                 Textarea::make('summary')->label('Resumo')->helperText('Aparece no card da página inicial.')->maxLength(300)->rows(2)->columnSpanFull(),
                 MarkdownEditor::make('description')->label('Descrição completa')->columnSpanFull()
                     ->toolbarButtons([['bold', 'italic', 'link'], ['heading', 'bulletList', 'orderedList'], ['undo', 'redo']]),
-                FileUpload::make('image_path')->label('Imagem principal')->image()->disk('public')->directory('promocoes')
+                FileUpload::make('image_path')->label('Imagem principal')->image()->acceptedFileTypes(self::IMAGE_TYPES)->disk('public')->directory('promocoes')
                     ->maxSize(2048)->helperText('JPG, PNG ou WebP, até 2 MB. Proporção ideal 16:10.')->columnSpanFull(),
                 Repeater::make('images')->label('Galeria (opcional)')->relationship()->orderColumn('position')
                     ->schema([
-                        FileUpload::make('path')->label('Imagem')->image()->disk('public')->directory('promocoes')->maxSize(2048)->required(),
+                        FileUpload::make('path')->label('Imagem')->image()->acceptedFileTypes(self::IMAGE_TYPES)->disk('public')->directory('promocoes')->maxSize(2048)->required(),
                         TextInput::make('alt')->label('Descrição da imagem (acessibilidade)')->maxLength(255),
                     ])->columns(2)->defaultItems(0)->addActionLabel('Adicionar imagem')->collapsible()->columnSpanFull(),
             ]),

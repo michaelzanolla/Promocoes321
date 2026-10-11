@@ -5,7 +5,7 @@
     use App\Support\Format;
 
     $phase = $promotion->phase();
-    $url = route('promotions.show', $promotion);
+    $url = route('promotions.show', $promotion->slug);
 @endphp
 
 <article {{ $attributes->class('bilhete group overflow-visible') }}>

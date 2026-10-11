@@ -96,9 +96,12 @@
             <p x-show="visible.length === 0" class="rounded-(--radius-bilhete) border border-dashed bg-cartao px-6 py-10 text-center text-tinta-suave" x-cloak
                 x-text="filter === 'selected' ? 'Você ainda não escolheu nenhum número.' : 'Nenhum número disponível nesta faixa.'"></p>
 
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-1.5">
+            {{-- Uma parada só no Tab; dentro da grade, setas, Home e End. --}}
+            <p id="dica-grade" class="sr-only">Use as setas para mover entre os números e Enter ou espaço para escolher.</p>
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-1.5" aria-describedby="dica-grade"
+                x-effect="tabStop = visible.includes(cursor) ? cursor : visible[0]" @keydown="move($event)">
                 <template x-for="n in visible" :key="n">
-                    <button type="button" @click="toggle(n)" :id="'n' + n"
+                    <button type="button" @click="toggle(n)" :id="'n' + n" :tabindex="n === tabStop ? 0 : -1" @focus="cursor = n"
                         class="cel num min-h-11 text-sm"
                         :class="'cel-' + state(n)"
                         :aria-pressed="state(n) === 'minha'"
@@ -164,6 +167,8 @@
                     offline: false,
                     updatedAt: '',
                     checkoutKey: crypto.randomUUID(),
+                    cursor: null,
+                    tabStop: null,
 
                     init() {
                         try { this.selected = JSON.parse(localStorage.getItem(this.storageKey) || '[]').filter((n) => n >= this.start && n <= this.end) } catch (e) {}
@@ -231,6 +236,17 @@
                     },
 
                     clear() { this.selected = []; this.message = '' },
+
+                    move(e) {
+                        let btns = [...e.currentTarget.querySelectorAll('button')]
+                        let i = btns.indexOf(e.target)
+                        if (i < 0) return
+                        let cols = btns.filter((b) => b.offsetTop === btns[0].offsetTop).length
+                        let j = { ArrowLeft: i - 1, ArrowRight: i + 1, ArrowUp: i - cols, ArrowDown: i + cols, Home: 0, End: btns.length - 1 }[e.key]
+                        if (j === undefined || j < 0 || j >= btns.length) return
+                        e.preventDefault()
+                        btns[j].focus()
+                    },
 
                     random() {
                         let want = Math.min(this.randomCount || 1, this.max - this.selected.length)

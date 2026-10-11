@@ -14,13 +14,13 @@
             <label class="grid gap-1 text-sm font-medium">
                 Código do pedido
                 <input name="code" required maxlength="20" autocomplete="off" value="{{ old('code') }}" placeholder="Ex.: AB2CD3EF4G"
-                    class="num min-h-11 rounded-[10px] border bg-papel px-3 text-base uppercase focus:bg-cartao" aria-describedby="erro-codigo">
+                    class="num min-h-11 rounded-[10px] border bg-papel px-3 text-base uppercase focus:bg-cartao" aria-describedby="erro-codigo" @error('code') aria-invalid="true" @enderror>
                 @error('code') <span id="erro-codigo" class="text-carimbo">{{ $message }}</span> @enderror
             </label>
             <label class="grid gap-1 text-sm font-medium">
                 E-mail usado na compra
                 <input name="email" type="email" required autocomplete="email" value="{{ old('email') }}"
-                    class="min-h-11 rounded-[10px] border bg-papel px-3 text-base focus:bg-cartao" aria-describedby="erro-email">
+                    class="min-h-11 rounded-[10px] border bg-papel px-3 text-base focus:bg-cartao" aria-describedby="erro-email" @error('email') aria-invalid="true" @enderror>
                 @error('email') <span id="erro-email" class="text-carimbo">{{ $message }}</span> @enderror
             </label>
             <div>

@@ -59,8 +59,8 @@
                     @endif
                 </table>
 
-                <div class="label" style="margin-top: 12px;">Números confirmados</div>
-                <div style="margin-top: 4px;">
+                <div class="label" style="margin: 12px 0 0 2px;">Números confirmados</div>
+                <div style="margin: 8px 0 0 2px;">
                     @foreach ($r['numbers'] as $n)
                         <span class="chip num {{ $r['valid'] ? '' : 'chip-void' }}">{{ $n }}</span>
                     @endforeach

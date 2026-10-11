@@ -57,6 +57,12 @@ class OrderController extends Controller
         ], [
             'payment_method.in' => 'Esta forma de pagamento não está disponível para esta promoção.',
             'accept_terms.accepted' => 'Para continuar, aceite as regras da promoção e os termos de uso.',
+        ], [
+            'buyer_name' => 'nome completo',
+            'buyer_email' => 'e-mail',
+            'buyer_cpf' => 'CPF',
+            'buyer_phone' => 'telefone',
+            'payment_method' => 'forma de pagamento',
         ]);
 
         $order->forceFill([
