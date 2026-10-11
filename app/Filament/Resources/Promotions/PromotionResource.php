@@ -8,12 +8,14 @@ use App\Enums\PromotionStatus;
 use App\Filament\Resources\Promotions\Pages\CreatePromotion;
 use App\Filament\Resources\Promotions\Pages\EditPromotion;
 use App\Filament\Resources\Promotions\Pages\ListPromotions;
+use App\Filament\Resources\Promotions\Pages\ViewPromotion;
 use App\Models\Promotion;
 use App\Support\Format;
 use BackedEnum;
 use Closure;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -123,7 +125,7 @@ class PromotionResource extends Resource
                 MarkdownEditor::make('rules')->label('Regras de participação')
                     ->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList']]),
                 MarkdownEditor::make('draw_info')->label('Como o resultado é apurado')
-                    ->helperText('Ex.: data do sorteio, critério (Loteria Federal, sorteio ao vivo etc.) e onde o resultado será divulgado.')
+                    ->helperText('Ex.: data e horário do sorteio, como ele será feito (ao vivo em rede social, presencial com testemunhas etc.) e onde o resultado será divulgado.')
                     ->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList']]),
                 TextInput::make('legal_reference')->label('Referência legal')->maxLength(255)
                     ->helperText('Número de autorização ou parecer jurídico. Obrigatório para publicar em produção.'),
@@ -166,6 +168,8 @@ class PromotionResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                // Congeladas (resultado publicado ou canceladas) abrem só para leitura.
+                ViewAction::make()->hidden(fn (Promotion $record) => auth()->user()?->can('update', $record) ?? false),
                 ActionGroup::make(PromotionActions::all()),
             ]);
     }
@@ -176,6 +180,7 @@ class PromotionResource extends Resource
             'index' => ListPromotions::route('/'),
             'create' => CreatePromotion::route('/nova'),
             'edit' => EditPromotion::route('/{record}/editar'),
+            'view' => ViewPromotion::route('/{record}'),
         ];
     }
 }

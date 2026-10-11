@@ -3,6 +3,7 @@
 namespace App\Payments;
 
 use App\Enums\PaymentStatus;
+use App\Enums\PromotionPhase;
 use App\Models\Order;
 use App\Models\Payment;
 use DomainException;
@@ -41,6 +42,12 @@ class StartPayment
 
             if ($open) {
                 return $open;
+            }
+
+            // Pausada ou encerrada: nenhuma cobrança nova. Pix já gerado e pago dentro do prazo ainda vale.
+            $phase = $order->promotion->phase();
+            if ($phase !== PromotionPhase::Open) {
+                throw new DomainException('Esta promoção está '.mb_strtolower($phase->label()).' e não aceita novos pagamentos no momento.');
             }
 
             $charge = $this->gateway->createCharge($order);

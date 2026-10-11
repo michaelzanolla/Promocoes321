@@ -126,6 +126,46 @@ class AdminPanelTest extends TestCase
         $this->assertSame(PromotionStatus::Draft, $draft->fresh()->status);
     }
 
+    public function test_result_proof_link_must_be_a_web_address(): void
+    {
+        $this->actingAs($this->admin);
+        $promotion = Promotion::factory()->create(['status' => PromotionStatus::Closed]);
+
+        Livewire::test(EditPromotion::class, ['record' => $promotion->getRouteKey()])
+            ->callAction('recordResult', ['number' => 10, 'proof_url' => 'ftp://exemplo.test/ata.pdf'])
+            ->assertHasActionErrors(['proof_url']);
+        $this->assertSame(PromotionStatus::Closed, $promotion->fresh()->status);
+
+        Livewire::test(EditPromotion::class, ['record' => $promotion->getRouteKey()])
+            ->callAction('recordResult', ['number' => 10, 'proof_url' => 'https://exemplo.test/ata.pdf'])
+            ->assertHasNoActionErrors();
+        $this->assertSame('https://exemplo.test/ata.pdf', $promotion->fresh()->result_proof_url);
+    }
+
+    public function test_result_proof_can_be_an_uploaded_file_shown_on_the_public_page(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->admin);
+        $promotion = Promotion::factory()->create(['status' => PromotionStatus::Closed, 'slug' => 'sorteada']);
+
+        Livewire::test(EditPromotion::class, ['record' => $promotion->getRouteKey()])
+            ->callAction('recordResult', ['number' => 10, 'proof_file' => UploadedFile::fake()->create('ata.html', 10, 'text/html')])
+            ->assertHasActionErrors(['proof_file']);
+
+        Livewire::test(EditPromotion::class, ['record' => $promotion->getRouteKey()])
+            ->callAction('recordResult', ['number' => 10, 'proof_file' => UploadedFile::fake()->create('ata.pdf', 100, 'application/pdf')])
+            ->assertHasNoActionErrors();
+
+        $path = $promotion->fresh()->result_proof_path;
+        $this->assertStringStartsWith('sorteios/', $path);
+        Storage::disk('public')->assertExists($path);
+
+        auth()->logout();
+        $this->get(route('promotions.show', 'sorteada'))
+            ->assertSee('Ver comprovação do sorteio (PDF)')
+            ->assertSee(Storage::disk('public')->url($path), false);
+    }
+
     public function test_admin_created_user_gets_reset_link_and_chosen_role(): void
     {
         Notification::fake();

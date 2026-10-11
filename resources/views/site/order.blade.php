@@ -46,6 +46,12 @@
         @error('order')
             <p role="alert" class="mt-4 rounded-[10px] border border-carimbo/30 bg-carimbo-claro px-4 py-3 text-sm text-carimbo">{{ $message }}</p>
         @enderror
+        @if ($promotion->status === \App\Enums\PromotionStatus::Cancelled)
+            <p class="mt-4 rounded-[10px] border border-carimbo/30 bg-carimbo-claro px-4 py-3 text-sm text-carimbo">
+                Esta promoção foi cancelada pelo organizador.
+                @if ($order->status === OrderStatus::Confirmed) O valor pago será devolvido; em caso de dúvida, fale com o suporte informando o código do pedido. @endif
+            </p>
+        @endif
 
         @if (in_array($order->status, [OrderStatus::AwaitingPayment, OrderStatus::Processing, OrderStatus::Confirmed], true))
             <ol class="mt-6 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4" aria-label="Etapas do pedido">
@@ -182,6 +188,13 @@
                 @if ($order->status === OrderStatus::Processing)
                     <p class="mt-4 rounded-[10px] border border-aviso/30 bg-aviso-claro px-4 py-3 text-sm text-aviso" role="status">
                         Seu pagamento está em análise pelo sistema de pagamento. Seus números continuam reservados; esta página atualiza sozinha.
+                    </p>
+                @elseif (! $payment && $promotion->phase() !== \App\Enums\PromotionPhase::Open)
+                    <p class="mt-4 rounded-[10px] border border-aviso/30 bg-aviso-claro px-4 py-3 text-sm text-aviso" role="status">
+                        Esta promoção está {{ mb_strtolower($promotion->phase()->label()) }} e não aceita novos pagamentos no momento.
+                        @if ($promotion->phase() === \App\Enums\PromotionPhase::Paused)
+                            Seus números continuam reservados até {{ $order->reserved_until->format('H:i') }} (horário de Brasília); se a promoção for retomada antes disso, você poderá pagar por aqui.
+                        @endif
                     </p>
                 @elseif (! $payment)
                     <form method="POST" action="{{ route('orders.pay', $order->public_code) }}" class="mt-5" x-data="{ sending: false }" @submit="sending = true">

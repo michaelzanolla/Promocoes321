@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PromotionPhase;
 use App\Enums\PromotionStatus;
 use App\Models\AuditLog;
+use App\Models\Order;
 use App\Models\Promotion;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -97,6 +98,10 @@ class PromotionLifecycle
     {
         $this->expectStatus($promotion, [PromotionStatus::Draft, PromotionStatus::Published, PromotionStatus::Paused, PromotionStatus::Closed], 'Esta promoção não pode mais ser cancelada.');
         $this->transition($promotion, PromotionStatus::Cancelled, 'promotion.cancelled');
+
+        // Reservas ainda não pagas deixam de valer (a conciliação cancela as cobranças no provedor).
+        // Pagamento que chegar mesmo assim vai para análise (SyncPayment).
+        $promotion->orders()->where('status', OrderStatus::AwaitingPayment)->each(fn (Order $order) => app(CancelOrder::class)($order));
     }
 
     /**
@@ -109,7 +114,10 @@ class PromotionLifecycle
         ])->count();
     }
 
-    public function recordResult(Promotion $promotion, int $number, ?string $proofUrl, ?string $notes): void
+    /**
+     * @param  ?string  $proofPath  arquivo de comprovação já salvo no disco público (foto, print ou PDF da ata)
+     */
+    public function recordResult(Promotion $promotion, int $number, ?string $proofUrl, ?string $notes, ?string $proofPath = null): void
     {
         if ($promotion->phase() !== PromotionPhase::Closed) {
             throw new DomainException('O resultado só pode ser registrado depois que a promoção for encerrada.');
@@ -123,16 +131,17 @@ class PromotionLifecycle
             throw new DomainException("Ainda há {$pending} pedido(s) aguardando pagamento ou em análise. Resolva-os antes de registrar o resultado.");
         }
 
-        DB::transaction(function () use ($promotion, $number, $proofUrl, $notes) {
+        DB::transaction(function () use ($promotion, $number, $proofUrl, $notes, $proofPath) {
             $promotion->forceFill([
                 'status' => PromotionStatus::Drawn,
                 'result_number' => $number,
                 'result_proof_url' => $proofUrl,
+                'result_proof_path' => $proofPath,
                 'result_notes' => $notes,
                 'result_published_at' => now(),
             ])->save();
 
-            AuditLog::record('promotion.result_recorded', $promotion, ['result_number' => $number, 'proof_url' => $proofUrl]);
+            AuditLog::record('promotion.result_recorded', $promotion, ['result_number' => $number, 'proof_url' => $proofUrl, 'proof_file' => $proofPath]);
         });
     }
 

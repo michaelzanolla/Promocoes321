@@ -94,9 +94,10 @@
                         </div>
                     </dl>
 
-                    @if ($promotion->reserved_count > 0)
+                    {{-- Só enquanto há venda: depois de encerrada, esses números não voltam a ficar disponíveis. --}}
+                    @if ($promotion->reserved_count > 0 && in_array($phase, [PromotionPhase::Open, PromotionPhase::Paused], true))
                         <p class="text-xs text-tinta-suave">
-                            {{ $promotion->reserved_count }} {{ $promotion->reserved_count === 1 ? 'número está reservado' : 'números estão reservados' }} aguardando pagamento e pode{{ $promotion->reserved_count === 1 ? '' : 'm' }} voltar a ficar disponível.
+                            {{ $promotion->reserved_count === 1 ? '1 número está reservado ou em verificação' : $promotion->reserved_count.' números estão reservados ou em verificação' }}, ainda sem pagamento confirmado. Reservas não pagas no prazo voltam a ficar disponíveis.
                         </p>
                     @endif
                 </div>
@@ -128,8 +129,18 @@
                 @if ($promotion->result_published_at)
                     <p class="text-sm text-tinta-suave">Publicado em {{ $date($promotion->result_published_at) }}</p>
                 @endif
+                @if ($promotion->result_proof_path)
+                    @php($proofFile = \Illuminate\Support\Facades\Storage::disk('public')->url($promotion->result_proof_path))
+                    @if (str_ends_with(strtolower($promotion->result_proof_path), '.pdf'))
+                        <p class="mt-3"><a href="{{ $proofFile }}" class="underline" target="_blank">Ver comprovação do sorteio (PDF)</a></p>
+                    @else
+                        <a href="{{ $proofFile }}" target="_blank" class="mt-3 inline-block">
+                            <img src="{{ $proofFile }}" alt="Comprovação do sorteio" class="max-h-64 rounded-[10px] border">
+                        </a>
+                    @endif
+                @endif
                 @if ($promotion->result_proof_url)
-                    <p class="mt-3"><a href="{{ $promotion->result_proof_url }}" class="underline" rel="noopener nofollow" target="_blank">Ver comprovação do sorteio</a></p>
+                    <p class="mt-3"><a href="{{ $promotion->result_proof_url }}" class="underline" rel="noopener nofollow" target="_blank">Ver gravação ou publicação do sorteio</a></p>
                 @endif
                 @if ($promotion->result_notes)
                     <div class="prose-pagina mt-3 text-sm">{!! $markdown($promotion->result_notes) !!}</div>

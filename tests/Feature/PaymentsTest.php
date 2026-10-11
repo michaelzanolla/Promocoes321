@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Payments\RefundOrder;
 use App\Payments\StartPayment;
 use App\Services\ExpireOrders;
+use App\Services\PromotionLifecycle;
 use App\Services\ReserveNumbers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -218,6 +219,26 @@ class PaymentsTest extends TestCase
         $this->assertStringContainsString('valor', $order->fresh()->review_reason);
     }
 
+    public function test_card_in_risk_analysis_holds_the_reservation_until_the_provider_decides(): void
+    {
+        $order = $this->identifiedOrder([8], PaymentMethod::CreditCard);
+        $payment = app(StartPayment::class)($order);
+
+        $this->setRemote($payment->provider_payment_id, ['status' => 'AWAITING_RISK_ANALYSIS']);
+        $this->webhook('evt_1', 'PAYMENT_AWAITING_RISK_ANALYSIS', $payment->provider_payment_id);
+        $this->assertSame(OrderStatus::Processing, $order->fresh()->status);
+
+        // Análise demorou mais que a reserva: os números continuam presos ao pedido.
+        $this->travel(1)->hours();
+        app(ExpireOrders::class)->expireAllDue();
+        $this->assertSame(OrderStatus::Processing, $order->fresh()->status);
+
+        $this->setRemote($payment->provider_payment_id, ['status' => 'PENDING']);
+        $this->webhook('evt_2', 'PAYMENT_REPROVED_BY_RISK_ANALYSIS', $payment->provider_payment_id);
+        $this->assertSame(PaymentStatus::Failed, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::AwaitingPayment, $order->fresh()->status);
+    }
+
     public function test_refused_card_marks_payment_failed_and_keeps_order_waiting(): void
     {
         $order = $this->identifiedOrder([7], PaymentMethod::CreditCard);
@@ -259,6 +280,67 @@ class PaymentsTest extends TestCase
         $this->assertSame(OrderStatus::NeedsReview, $order->fresh()->status);
         $this->assertSame([$other->id], OrderItem::where('number', 11)->where('active', 1)->pluck('order_id')->all());
         $this->assertSame(0, OrderItem::where('order_id', $order->id)->where('active', 1)->count());
+    }
+
+    public function test_late_payment_after_the_promotion_closed_goes_to_review(): void
+    {
+        $order = $this->identifiedOrder([12]);
+        $payment = app(StartPayment::class)($order);
+        $order->forceFill(['reserved_until' => now()->subMinute()])->save();
+        app(ExpireOrders::class)->expireAllDue();
+        app(PromotionLifecycle::class)->close($this->promotion);
+
+        $this->remote[$payment->provider_payment_id]['status'] = 'RECEIVED';
+        $this->webhook('evt_1', 'PAYMENT_RECEIVED', $payment->provider_payment_id);
+
+        // Reativar o número agora seria vender depois do encerramento.
+        $this->assertSame(OrderStatus::NeedsReview, $order->fresh()->status);
+        $this->assertSame(0, OrderItem::where('order_id', $order->id)->where('active', 1)->count());
+    }
+
+    public function test_no_new_charge_while_the_promotion_is_paused_or_closed(): void
+    {
+        $order = $this->identifiedOrder([15]);
+        $lifecycle = app(PromotionLifecycle::class);
+
+        $lifecycle->pause($this->promotion);
+        $this->get(route('orders.show', $order->public_code))->assertSee('não aceita novos pagamentos')->assertDontSee('Gerar Pix');
+        $this->post(route('orders.pay', $order->public_code))->assertSessionHasErrors('order');
+        $this->assertSame(0, Payment::count());
+
+        $lifecycle->resume($this->promotion);
+        $this->post(route('orders.pay', $order->public_code))->assertSessionHasNoErrors();
+        $this->assertSame(1, Payment::count());
+
+        $other = $this->identifiedOrder([16]);
+        $lifecycle->close($this->promotion->fresh());
+        $this->post(route('orders.pay', $other->public_code))->assertSessionHasErrors('order');
+        $this->assertSame(1, Payment::count());
+    }
+
+    public function test_cancelling_the_promotion_cancels_open_reservations(): void
+    {
+        $order = $this->identifiedOrder([13]);
+
+        app(PromotionLifecycle::class)->cancel($this->promotion);
+
+        $this->assertSame(OrderStatus::Cancelled, $order->fresh()->status);
+        $this->assertSame(0, OrderItem::where('order_id', $order->id)->where('active', 1)->count());
+        $this->post(route('orders.pay', $order->public_code))->assertSessionHasErrors('order');
+    }
+
+    public function test_payment_approved_after_the_promotion_was_cancelled_goes_to_review(): void
+    {
+        $order = $this->identifiedOrder([14], PaymentMethod::CreditCard);
+        $payment = app(StartPayment::class)($order);
+        $this->setRemote($payment->provider_payment_id, ['status' => 'AWAITING_RISK_ANALYSIS']);
+        $this->webhook('evt_1', 'PAYMENT_AWAITING_RISK_ANALYSIS', $payment->provider_payment_id);
+
+        app(PromotionLifecycle::class)->cancel($this->promotion);
+        $this->setRemote($payment->provider_payment_id, ['status' => 'CONFIRMED']);
+        $this->webhook('evt_2', 'PAYMENT_CONFIRMED', $payment->provider_payment_id);
+
+        $this->assertSame(OrderStatus::NeedsReview, $order->fresh()->status);
     }
 
     public function test_reconciliation_confirms_without_webhook_and_cancels_charges_of_expired_orders(): void

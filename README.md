@@ -176,7 +176,7 @@ A porta costuma ser 2222 na HostGator; confira no cPanel. Teste com `ssh promoco
 - **Banco**: Bancos de dados MySQL > crie um banco e um usuário exclusivos e dê ao usuário todos os privilégios só nesse banco.
 - **E-mail**: Contas de e-mail > crie `nao-responda@SEU-DOMINIO`. Em Entregabilidade de e-mail, confira se SPF e DKIM estão válidos.
 - **Subdomínio**: Domínios > criar, com raiz do documento `promocoes/public` (sem `public_html`). Em seguida, SSL/TLS Status > rodar o AutoSSL para o subdomínio. O `.htaccess` já redireciona tudo para HTTPS.
-- No MultiPHP Manager, deixe o subdomínio em PHP 8.3.
+- No MultiPHP Manager, deixe o subdomínio em PHP 8.3. No MultiPHP INI Editor, use `upload_max_filesize = 8M` e `post_max_size = 10M` (imagens das promoções e comprovação do sorteio, até 5 MB).
 
 ### 3. `.env` do servidor (uma vez)
 

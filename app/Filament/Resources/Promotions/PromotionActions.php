@@ -11,6 +11,7 @@ use Closure;
 use DomainException;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -31,10 +32,10 @@ class PromotionActions
             self::transition('publish', 'Publicar', Heroicon::OutlinedRocketLaunch, 'success', [PromotionStatus::Draft], 'Promoção publicada.',
                 'A promoção ficará visível no site. Preço, numeração e formas de pagamento travam a partir do primeiro pedido.'),
             self::transition('pause', 'Pausar', Heroicon::OutlinedPauseCircle, 'warning', [PromotionStatus::Published], 'Promoção pausada.',
-                'Novas reservas ficam suspensas. Pedidos em andamento continuam valendo.'),
+                'Novas reservas e novos pagamentos ficam suspensos. Reservas em andamento continuam valendo até o prazo delas; Pix já gerado e pago nesse prazo é aceito.'),
             self::transition('resume', 'Retomar', Heroicon::OutlinedPlayCircle, 'success', [PromotionStatus::Paused], 'Promoção retomada.'),
             self::transition('close', 'Encerrar', Heroicon::OutlinedLockClosed, 'gray', [PromotionStatus::Published, PromotionStatus::Paused], 'Promoção encerrada.',
-                'Ninguém mais poderá reservar números. Pagamentos de pedidos dentro do prazo continuam sendo aceitos.'),
+                'Ninguém mais poderá reservar números nem gerar pagamento. Pix já gerado e pago dentro do prazo da reserva ainda é aceito.'),
             self::recordResult(),
             self::duplicate(),
             self::transition('cancel', 'Cancelar promoção', Heroicon::OutlinedXCircle, 'danger',
@@ -76,11 +77,15 @@ class PromotionActions
                 TextInput::make('number')->label('Número sorteado')->required()->integer()
                     ->minValue($record->number_start)->maxValue($record->lastNumber())
                     ->helperText('Entre '.$record->formatNumber($record->number_start).' e '.$record->formatNumber($record->lastNumber()).'.'),
-                TextInput::make('proof_url')->label('Link da comprovação (vídeo, ata, resultado da loteria)')->url()->maxLength(255),
+                FileUpload::make('proof_file')->label('Arquivo da comprovação (foto, print ou PDF da ata)')
+                    ->disk('public')->directory('sorteios')->maxSize(5120)
+                    ->acceptedFileTypes([...PromotionResource::IMAGE_TYPES, 'application/pdf'])
+                    ->helperText('JPG, PNG, WebP ou PDF, até 5 MB. Fica disponível na página pública da promoção.'),
+                TextInput::make('proof_url')->label('Link do sorteio (gravação da transmissão ao vivo, publicação etc.)')->url()->rule('url:http,https')->maxLength(255),
                 Textarea::make('notes')->label('Observações')->rows(3),
             ])
             ->action(fn (Promotion $record, array $data) => self::run(
-                fn () => app(PromotionLifecycle::class)->recordResult($record, (int) $data['number'], $data['proof_url'] ?? null, $data['notes'] ?? null),
+                fn () => app(PromotionLifecycle::class)->recordResult($record, (int) $data['number'], $data['proof_url'] ?? null, $data['notes'] ?? null, $data['proof_file'] ?? null),
                 'Resultado registrado.',
             ));
     }

@@ -18,6 +18,17 @@ Feito na Fase 8 até agora (commitado na branch `fase-8-producao`):
 - Dependências npm: `overrides` força `tinypool` 2.1.2 (vulnerabilidade crítica no 2.1.0, usado pelo `vite-plus` 0.3.0). A 0.3.3 do `vite-plus` exige migrar o Vite para o núcleo dele (`vp migrate`); ao fazer isso, remover o `overrides`. `npm audit`: 0.
 - Testes ponta a ponta com Playwright (`npm run test:e2e`, 4 testes): compra até os dados confirmados e desistência, erros do formulário, disputa do mesmo número e teclado na grade. Acharam um bug da Fase 3: o cartão da página inicial levava para `/promocoes/{id}` (404); corrigido e coberto também no PHPUnit.
 
+Na branch `fase-8-exemplos-status` (a partir da `fase-8-producao`, commitada):
+
+- Página inicial: destaque do título agora é "Concorra a prêmios." (`config/platform.php`; editável em Painel > Configurações).
+- `StatusExamplesSeeder` (roda junto com `db:seed`): uma promoção fictícia em cada situação (rascunho, em breve, aberta, pausada, encerrada pelo admin e pela data, resultado publicado, cancelada) e pedidos em todas as situações, criados pelos próprios serviços do sistema. Para só acrescentar ao banco local: `php artisan db:seed --class=StatusExamplesSeeder`.
+- Bugs corrigidos com teste: (1) cartão em análise de risco não segurava a reserva (o pedido não ia para "em processamento" e podia expirar no meio da análise); (2) cancelar a promoção não cancelava as reservas abertas, que ainda podiam ser pagas; (3) pagamento atrasado reativava números com a promoção pausada, encerrada ou sorteada, e pagamento em promoção cancelada era confirmado (agora vão para "em análise"); (4) comprador de promoção cancelada não era avisado e o comprovante seguia "válido"; (5) promoções com resultado publicado ou canceladas não abriam no painel (agora abrem só para leitura).
+- Exemplos estáveis: a reserva "aguardando pagamento" do exemplo vale 1 ano, "Em breve" começa daqui a 1 ano e as abertas e a pausada vão até daqui a 1 ano, para nenhuma mudar de situação sozinha. Os testes usam o banco `promocoes_test`; o banco local (`promocoes`) nunca é apagado por eles.
+- Comprovação do sorteio: além do link (gravação da live, publicação), o administrador pode anexar um arquivo (foto, print ou PDF da ata, até 5 MB), exibido na página pública da promoção. Nada cita mais a Loteria Federal; o exemplo usa uma ata fictícia em PDF. Links só `http`/`https`. No php.ini local, `upload_max_filesize` foi para 8M e `post_max_size` para 10M (cópia do original em `php.ini.bak-upload`).
+- Página da promoção: a frase sobre números reservados só aparece com a promoção aberta ou pausada e não diz mais "aguardando pagamento" para pedidos reembolsados ou em análise.
+- Regra nova: com a promoção pausada ou encerrada, nenhuma cobrança nova é gerada (a página do pedido avisa; Pix já gerado e pago dentro do prazo continua valendo). Avisos do painel e plano da Fase 1 atualizados.
+- Testes novos: exemplo de toda situação existe; todas as telas abrem em todas as situações; o comprador não consegue cancelar, pagar ou alterar dados fora de "aguardando pagamento".
+
 Próximo passo ao retomar:
 
 1. **Aguardando a HostGator** ativar o shell SSH. Depois: testar `ssh promocoes`, conferir `php -v` e `mysqldump`. Subdomínio: promocoes.osrv.com.br (já existe, mesmo servidor); a raiz do documento ainda precisa apontar para `promocoes/public`.

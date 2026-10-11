@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PromotionStatus;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Support\Qr;
@@ -64,12 +65,14 @@ class ReceiptController extends Controller
         $verifyUrl = route('receipts.verify', $order->receipt_code);
         $payment = $order->payments->sortByDesc('id')->firstWhere('paid_at', '!=', null);
 
-        [$valid, $statusText] = match ($order->status) {
-            OrderStatus::Confirmed => [true, 'Válido: pagamento confirmado.'],
-            OrderStatus::Refunded => [false, 'Não é mais válido: o pedido foi reembolsado.'],
-            OrderStatus::NeedsReview => [false, 'Em verificação: há uma pendência no pagamento deste pedido.'],
-            default => [false, 'Não é válido: '.mb_strtolower($order->status->label()).'.'],
-        };
+        [$valid, $statusText] = $promotion->status === PromotionStatus::Cancelled && $order->status === OrderStatus::Confirmed
+            ? [false, 'Não vale mais: a promoção foi cancelada e o valor deve ser devolvido ao comprador.']
+            : match ($order->status) {
+                OrderStatus::Confirmed => [true, 'Válido: pagamento confirmado.'],
+                OrderStatus::Refunded => [false, 'Não é mais válido: o pedido foi reembolsado.'],
+                OrderStatus::NeedsReview => [false, 'Em verificação: há uma pendência no pagamento deste pedido.'],
+                default => [false, 'Não é válido: '.mb_strtolower($order->status->label()).'.'],
+            };
 
         return [
             'platform' => config('app.name'),

@@ -13,6 +13,6 @@ return [
     'contact_whatsapp' => env('CONTACT_WHATSAPP'),
 
     'hero_title' => 'Escolha seus números.',
-    'hero_highlight' => 'Concorra entre amigos.',
+    'hero_highlight' => 'Concorra a prêmios.',
     'hero_text' => 'Escolha uma promoção, marque os números que quiser e pague por Pix ou cartão. Assim que o pagamento é confirmado, você recebe o comprovante com os seus números.',
 ];

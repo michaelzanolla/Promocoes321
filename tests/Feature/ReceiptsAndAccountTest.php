@@ -12,6 +12,7 @@ use App\Models\Promotion;
 use App\Models\User;
 use App\Payments\Charge;
 use App\Payments\SyncPayment;
+use App\Services\PromotionLifecycle;
 use App\Services\ReserveNumbers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -96,6 +97,18 @@ class ReceiptsAndAccountTest extends TestCase
         $this->flushSession();
         $this->get(route('orders.receipt', $order->public_code))->assertNotFound();
         $this->get(route('orders.receipt.pdf', $order->public_code))->assertNotFound();
+    }
+
+    public function test_cancelled_promotion_invalidates_receipt_and_warns_the_buyer(): void
+    {
+        $order = $this->paidOrder();
+        app(PromotionLifecycle::class)->cancel($this->promotion);
+
+        $this->get(route('receipts.verify', $order->receipt_code))->assertSee('a promoção foi cancelada');
+        $this->withSession(['orders.access' => [$order->public_code]])
+            ->get(route('orders.show', $order->public_code))
+            ->assertSee('Esta promoção foi cancelada pelo organizador.')
+            ->assertSee('O valor pago será devolvido');
     }
 
     public function test_unpaid_orders_have_no_receipt(): void

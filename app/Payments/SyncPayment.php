@@ -4,6 +4,7 @@ namespace App\Payments;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\PromotionPhase;
 use App\Mail\OrderMail;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -48,6 +49,12 @@ class SyncPayment
 
             $payment->forceFill(['provider_status' => $charge->providerStatus, 'last_checked_at' => now()]);
 
+            // Cartão em análise de risco: a cobrança segue "pendente" (por isso fica antes do canMove),
+            // mas o pedido sai de "aguardando" para a reserva não expirar enquanto o provedor decide.
+            if ($new === PaymentStatus::Pending && $charge->inRiskAnalysis && $order->status === OrderStatus::AwaitingPayment) {
+                $order->forceFill(['status' => OrderStatus::Processing])->save();
+            }
+
             if (! $this->canMove($payment->status, $new)) {
                 $payment->save();
 
@@ -65,9 +72,7 @@ class SyncPayment
                 PaymentStatus::Confirmed => $this->confirm($order, $charge),
                 PaymentStatus::Refunded => $this->refund($order),
                 PaymentStatus::Disputed => $this->review($order, 'O comprador abriu uma contestação do pagamento no cartão.'),
-                PaymentStatus::Pending => $charge->inRiskAnalysis && $order->status === OrderStatus::AwaitingPayment
-                    ? $order->forceFill(['status' => OrderStatus::Processing])->save()
-                    : null,
+                PaymentStatus::Pending => null,
                 // Recusado ou cancelado: o pedido em análise de risco volta a aguardar; o prazo da reserva segue valendo.
                 PaymentStatus::Failed, PaymentStatus::Cancelled => $order->status === OrderStatus::Processing
                     ? $order->forceFill(['status' => OrderStatus::AwaitingPayment])->save()
@@ -103,7 +108,21 @@ class SyncPayment
             return;
         }
 
+        $phase = $order->promotion->phase();
+        if ($phase === PromotionPhase::Cancelled) {
+            $this->review($order, 'Pagamento recebido para uma promoção cancelada. Reembolse o comprador.');
+
+            return;
+        }
+
         if (in_array($order->status, [OrderStatus::Expired, OrderStatus::Cancelled], true)) {
+            // Reativar números fora da fase aberta seria vender depois de pausar, encerrar ou sortear.
+            if ($phase !== PromotionPhase::Open) {
+                $this->review($order, 'Pagamento recebido depois que a reserva acabou, com a promoção '.mb_strtolower($phase->label()).'. Reembolse o comprador.');
+
+                return;
+            }
+
             // Pagamento depois que a reserva acabou: tenta pegar os números de volta.
             // Se algum já é de outra pessoa, o banco recusa e o pedido vai para análise.
             try {

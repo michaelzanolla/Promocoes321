@@ -237,7 +237,7 @@ Só alguns estados são gravados no banco; os demais são calculados pela data. 
 | Transição | Regra |
 |---|---|
 | `draft` → `published` | Campos obrigatórios completos. Em produção, exige `legal_reference` preenchido e `is_demo = false`. |
-| `published` ↔ `paused` | Pausada não aceita novas reservas; pedidos em andamento continuam valendo. |
+| `published` ↔ `paused` | Pausada não aceita novas reservas nem gera novas cobranças; Pix já gerado e pago dentro do prazo da reserva vale. |
 | `published`/`paused` → `closed` | Para novas reservas. |
 | Encerrada → `drawn` | Só com **nenhum pedido aguardando ou em revisão**; o painel avisa quais estão pendentes. |
 | Qualquer estado (exceto `drawn`) → `cancelled` | Pedidos confirmados vão para fila de reembolso. |
@@ -303,7 +303,7 @@ Um pedido pode ter vários pagamentos (por exemplo, cartão recusado e depois Pi
 | Pagamento após a expiração | Tenta reativar os números. Se algum foi vendido a outra pessoa, o pedido vai para `needs_review`: o administrador reembolsa ou oferece outros números com o aceite do comprador. **Nunca há troca automática.** |
 | Pedido criado, cobrança não gerada | O pedido fica aguardando com o botão "gerar pagamento"; a reserva expira normalmente. |
 | Asaas fora do ar | Mensagem amigável; nova tentativa possível; a conciliação consulta o status depois. |
-| Promoção encerrada com pagamentos pendentes | Os pagamentos dentro do prazo valem; o resultado só pode ser registrado depois de todos resolvidos. |
+| Promoção encerrada com pagamentos pendentes | Nenhuma cobrança nova; Pix já gerado e pago dentro do prazo vale. Pagamento depois do prazo vai para análise. O resultado só pode ser registrado depois de todos resolvidos. |
 
 ---
 

@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
                 'draw_info' => 'Sem apuração: promoção de demonstração.',
                 'is_demo' => true,
                 'created_by' => $admin->id,
+                'ends_at' => now()->addYear(), // continua aberta por bastante tempo
             ]);
         }
 
@@ -56,6 +57,8 @@ class DatabaseSeeder extends Seeder
             'title' => '[FICTÍCIA] Rascunho de exemplo',
             'is_demo' => true,
         ]);
+
+        $this->call(StatusExamplesSeeder::class);
     }
 
     private function user(string $name, string $email, Role $role): User
