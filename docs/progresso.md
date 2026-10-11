@@ -2,9 +2,29 @@
 
 Atualizado em 2026-10-11. Para retomar, leia este arquivo, o [README](../README.md) e o [plano da Fase 1](fase-1-planejamento.md).
 
-## Onde paramos
+## Onde paramos (pausa em 2026-10-11)
 
-**A Fase 8 está em andamento** na branch `fase-8-producao` (criada a partir da `fase-7-comprovantes`).
+**Esperando a HostGator** responder ao chamado que pede a ativação do acesso SSH (shell). Todo o código está commitado; nada pendente na pasta.
+
+- **Branch atual:** `fase-8-numeracao` (último commit `5820197`). As branches são empilhadas: fase-7 → fase-8-producao → fase-8-exemplos-status → fase-8-numeracao. A `main` continua sem commits. A `fase-8-reset-senha` ficou vazia e pode ser apagada.
+- **Testes ao pausar:** 174 PHP + 4 Playwright passando; Pint e PHPStan limpos.
+- **Chamado na HostGator:** aberto em Plano M (cerv.org.br), pedindo ativar o SSH e confirmar porta 2222, o PHP 8.3 da linha de comando e o `mysqldump`. A resposta chega no e-mail do usuário.
+- **Acesso já preparado no PC:** chave `~/.ssh/hostgator` (cadastrada e autorizada no cPanel) e `~/.ssh/config` com o Host `promocoes` (promocoes.osrv.com.br, usuário jonesa50, porta 2222). A autenticação por chave já funcionou; falta só a HostGator ligar o shell.
+
+### Roteiro ao retomar
+
+1. Testar o acesso: `ssh promocoes`, depois `php -v` (precisa ser 8.3; se não, usar o caminho completo, ex.: `/opt/cpanel/ea-php83/root/usr/bin/php`) e `which mysqldump`.
+2. No cPanel: apontar a raiz do subdomínio `promocoes.osrv.com.br` para `promocoes/public`; rodar o AutoSSL; PHP 8.3 no MultiPHP Manager; `upload_max_filesize = 8M` e `post_max_size = 10M` no MultiPHP INI Editor; criar banco e usuário MySQL exclusivos; criar o e-mail `nao-responda@` e conferir SPF/DKIM.
+3. Criar `~/promocoes-shared/.env` a partir de `deploy/env.production.example` (Asaas em **sandbox**), com permissão 600, e guardar a `APP_KEY` fora da HostGator.
+4. Primeiro deploy: `bash deploy/deploy.sh promocoes`; depois `php artisan app:create-admin` no servidor.
+5. Cron (schedule:run a cada minuto e backup diário), webhook do Asaas e um teste completo no sandbox. Tudo está no README, seção Produção.
+6. No final, antes de publicar: pendências da seção "Pendências" abaixo, incluindo **Segurança do login** e os itens jurídicos e do Asaas.
+
+### Ambiente local
+
+Docker Desktop aberto, `docker compose up -d` e `php artisan serve` (http://localhost:8000). O banco local tem promoções fictícias em todas as situações e um exemplo de ação iniciada fora do site. Para entrar no painel, crie seu administrador com `php artisan app:create-admin seu-email`.
+
+## Histórico da Fase 8
 
 Feito na Fase 8 até agora (commitado na branch `fase-8-producao`):
 
@@ -43,11 +63,6 @@ Na branch `fase-8-numeracao` (a partir da `fase-8-exemplos-status`, commitada), 
 - Auditoria registra logins: entrada (com "lembrar de mim"), senha errada (só o e-mail, nunca a senha), conta desativada, código de dois fatores errado e bloqueio por excesso de tentativas (no máximo 1 registro por minuto por e-mail+IP). O bloqueio agora mostra aviso na tela de login em vez da página de erro 429.
 - Coluna `number_start` ampliada (antes aceitava só até 255). Exemplo novo: "[FICTÍCIA] Iniciada fora do site: moto".
 
-Próximo passo ao retomar:
-
-1. **Aguardando a HostGator** ativar o shell SSH. Depois: testar `ssh promocoes`, conferir `php -v` e `mysqldump`. Subdomínio: promocoes.osrv.com.br (já existe, mesmo servidor); a raiz do documento ainda precisa apontar para `promocoes/public`.
-2. Primeiro deploy no sandbox, seguindo o README.
-
 ## Situação das fases
 
 | Fase | Situação | Branch / commit |
@@ -59,7 +74,7 @@ Próximo passo ao retomar:
 | 5 — Seleção de números, reserva e checkout | Concluída | `fase-5-checkout` · `72ed127` |
 | 6 — Pagamentos (Asaas: Pix e cartão) | Concluída | `fase-6-pagamentos` · `666eca8` |
 | 7 — Comprovantes, área do participante, e-mails | Concluída | `fase-7-comprovantes` · `d24e663` |
-| 8 — Preparação para produção | **Em andamento** | `fase-8-producao` |
+| 8 — Preparação para produção | **Em andamento** (esperando o SSH da HostGator) | `fase-8-numeracao` · `5820197` |
 
 Cada branch foi criada a partir da anterior. A `main` ainda não tem commits; as fases ficam empilhadas até decidirmos como integrar.
 
