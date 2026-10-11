@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\NumberSelectionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
@@ -23,6 +24,11 @@ Route::post('promocoes/{slug}/reservar', [NumberSelectionController::class, 'res
 Route::get('pedido/{code}', [OrderController::class, 'show'])->middleware('throttle:orders')->name('orders.show');
 Route::put('pedido/{code}/dados', [OrderController::class, 'identify'])->middleware('throttle:orders')->name('orders.identify');
 Route::post('pedido/{code}/cancelar', [OrderController::class, 'cancel'])->middleware('throttle:orders')->name('orders.cancel');
+Route::post('pedido/{code}/pagamento', [OrderController::class, 'pay'])->middleware('throttle:orders')->name('orders.pay');
+Route::get('pedido/{code}/situacao', [OrderController::class, 'status'])->middleware('throttle:order-status')->name('orders.status');
+
+// Avisos do provedor de pagamento (sem CSRF; autenticados pelo token do webhook).
+Route::post('webhooks/asaas', AsaasWebhookController::class)->name('webhooks.asaas');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

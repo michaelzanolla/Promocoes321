@@ -94,6 +94,31 @@ Fica em `/admin` e usa o mesmo login do site (com 2FA, se ativado). Só administ
 
 Compradores sem conta acessam o pedido pela mesma sessão do navegador ou pelo link secreto do pedido. Quem não tem acesso recebe "página não encontrada", sem confirmar que o código existe.
 
+## Pagamentos (Asaas)
+
+Configuração no `.env` (nunca no código), com aspas simples porque a chave começa com `$`:
+
+```
+ASAAS_ENV=sandbox            # sandbox = testes; production = dinheiro real
+ASAAS_API_KEY='$aact_...'
+ASAAS_WEBHOOK_TOKEN='...'    # vazio = todos os avisos de webhook são recusados
+```
+
+- **Pix:** a página do pedido mostra QR Code, copia e cola, valor e prazo.
+- **Cartão:** o comprador paga na fatura hospedada do Asaas; os dados do cartão não passam pela plataforma.
+- **Confirmação:** sempre consultando a cobrança na API do Asaas (fonte da verdade). Valor e código do pedido são conferidos. Voltar da página de pagamento não confirma nada.
+- **Sem webhook (desenvolvimento):** a página do pedido consulta o Asaas enquanto está aberta, e `php artisan payments:sync` (agendado a cada minuto) concilia o resto.
+- **Pagamento depois do prazo:** se os números ainda estiverem livres, o pedido é confirmado; se algum já foi para outra pessoa, o pedido fica **Em análise** no painel para o administrador reembolsar. Números nunca são trocados sozinhos.
+- **Reembolso:** pelo painel (Pedidos > Reembolsar). O pedido só vira "reembolsado" quando o Asaas confirma.
+
+### Testar um pagamento no sandbox
+
+Gere o Pix pela página do pedido e, no painel do sandbox do Asaas, abra a cobrança e confirme o pagamento (o sandbox oferece essa opção para testes). A página do pedido atualiza sozinha em alguns segundos.
+
+### Webhook (depois do deploy)
+
+Em Asaas > Integrações > Webhooks: URL `https://SEU-SUBDOMINIO/webhooks/asaas`, versão v3, fila de sincronização ativada, tipo de envio sequencial, e os eventos de **cobranças** (todos os `PAYMENT_*`). Clique em **Gerar Token** e copie o mesmo valor para `ASAAS_WEBHOOK_TOKEN` no `.env` do servidor. O sistema trata avisos repetidos e fora de ordem, e sempre consulta a cobrança no Asaas antes de agir.
+
 ## Produção
 
 O roteiro de deploy na HostGator (SSH, subdomínio, cron, SSL) será documentado na Fase 8. Nunca rode `db:seed` em produção: o seeder recusa esse ambiente.

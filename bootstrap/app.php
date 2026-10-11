@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [EnsureUserIsActive::class]);
+        // Avisos do provedor de pagamento não têm token CSRF; são autenticados pelo token do webhook.
+        $middleware->preventRequestForgery(except: ['webhooks/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

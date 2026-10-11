@@ -3,10 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Payments\PaymentGateway;
+use App\Payments\PaymentGatewayException;
+use App\Payments\ReconcilePayments;
+use App\Payments\StartPayment;
 use App\Rules\Cpf;
 use App\Services\CancelOrder;
 use DomainException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -64,7 +70,7 @@ class OrderController extends Controller
         return redirect()->route('orders.show', $order->public_code)->with('status', 'Dados confirmados.');
     }
 
-    public function cancel(Request $request, string $code, CancelOrder $cancelOrder): RedirectResponse
+    public function cancel(Request $request, string $code, CancelOrder $cancelOrder, PaymentGateway $gateway): RedirectResponse
     {
         $order = Order::where('public_code', $code)->firstOrFail();
         $this->authorizeAccess($request, $order);
@@ -75,7 +81,70 @@ class OrderController extends Controller
             return back()->withErrors(['order' => $e->getMessage()]);
         }
 
+        // Tenta já invalidar a cobrança no provedor; se falhar, a conciliação agendada cancela depois.
+        foreach ($order->payments()->where('status', PaymentStatus::Pending)->get() as $payment) {
+            try {
+                $gateway->cancelCharge($payment->provider_payment_id);
+            } catch (PaymentGatewayException $e) {
+                report($e);
+            }
+        }
+
         return redirect()->route('orders.show', $order->public_code)->with('status', 'Pedido cancelado. Os números foram liberados.');
+    }
+
+    /**
+     * Gera a cobrança (Pix ou fatura do cartão). Cartão: leva para a fatura do provedor.
+     * Voltar da fatura não confirma nada: a confirmação vem só do provedor.
+     */
+    public function pay(Request $request, string $code, StartPayment $startPayment): RedirectResponse
+    {
+        $order = Order::where('public_code', $code)->firstOrFail();
+        $this->authorizeAccess($request, $order);
+
+        try {
+            $payment = $startPayment($order);
+        } catch (DomainException $e) {
+            return back()->withErrors(['order' => $e->getMessage()]);
+        } catch (PaymentGatewayException $e) {
+            report($e);
+
+            return back()->withErrors(['order' => 'Não conseguimos falar com o sistema de pagamento agora. Seus números continuam reservados; tente de novo em instantes.']);
+        }
+
+        if ($payment->method === PaymentMethod::CreditCard && $payment->invoice_url) {
+            return redirect()->away($payment->invoice_url);
+        }
+
+        return redirect()->route('orders.show', $order->public_code);
+    }
+
+    /**
+     * Situação do pedido para a página atualizar sozinha. Enquanto há cobrança em aberto,
+     * consulta o provedor no máximo a cada 8 s (não depende do webhook).
+     */
+    public function status(Request $request, string $code, ReconcilePayments $reconcile): JsonResponse
+    {
+        $order = Order::where('public_code', $code)->firstOrFail();
+        $this->authorizeAccess($request, $order);
+
+        $payment = $order->payments()->whereIn('status', [PaymentStatus::Pending, PaymentStatus::Failed])->latest('id')->first();
+
+        if ($payment && ($payment->last_checked_at === null || $payment->last_checked_at->lte(now()->subSeconds(8)))) {
+            try {
+                $reconcile->check($payment);
+            } catch (PaymentGatewayException $e) {
+                report($e);
+            }
+            $order->refresh();
+        }
+
+        $latest = $order->payments()->latest('id')->first();
+
+        return response()->json([
+            'order' => $order->status->value,
+            'payment' => $latest?->status->value,
+        ]);
     }
 
     /**

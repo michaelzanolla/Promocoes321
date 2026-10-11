@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Payments\AsaasGateway;
+use App\Payments\PaymentGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -20,7 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PaymentGateway::class, fn () => new AsaasGateway(
+            config('services.asaas.base_url'),
+            config('services.asaas.api_key'),
+        ));
     }
 
     /**
@@ -45,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('numbers-status', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
         // Páginas de pedido: limita tentativas de adivinhar códigos.
         RateLimiter::for('orders', fn (Request $request) => Limit::perMinute(30)->by($who($request)));
+        // A página do pedido consulta a situação a cada 5 s.
+        RateLimiter::for('order-status', fn (Request $request) => Limit::perMinute(30)->by($who($request)));
     }
 
     /**

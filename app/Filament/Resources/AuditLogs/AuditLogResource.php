@@ -83,7 +83,7 @@ class AuditLogResource extends Resource
             return '—';
         }
 
-        $type = ['App\Models\Promotion' => 'Promoção', 'App\Models\User' => 'Usuário'][$record->subject_type] ?? class_basename($record->subject_type);
+        $type = ['App\Models\Promotion' => 'Promoção', 'App\Models\User' => 'Usuário', 'App\Models\Order' => 'Pedido'][$record->subject_type] ?? class_basename($record->subject_type);
 
         return "{$type} #{$record->subject_id}";
     }

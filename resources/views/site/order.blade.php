@@ -20,9 +20,15 @@
     $steps = ['Números reservados', 'Seus dados', 'Pagamento', 'Comprovante'];
     $current = match (true) {
         $order->status === OrderStatus::Confirmed => 4,
-        $payable && $identified => 3,
+        $order->status === OrderStatus::Processing, $payable && $identified => 3,
         default => 2,
     };
+
+    // Cobrança em aberto (ou recusada) da forma de pagamento escolhida.
+    $payment = $order->payments()->where('method', $order->payment_method)
+        ->whereIn('status', [\App\Enums\PaymentStatus::Pending, \App\Enums\PaymentStatus::Failed])->latest('id')->first();
+    $watching = in_array($order->status, [OrderStatus::AwaitingPayment, OrderStatus::Processing], true);
+    $sandbox = config('services.asaas.env') !== 'production';
 @endphp
 
 <x-layouts::public :title="'Pedido '.$order->public_code">
@@ -163,15 +169,85 @@
             </section>
         @endif
 
-        {{-- Pagamento: a cobrança real é gerada pela integração com o Asaas (Fase 6). --}}
-        @if ($payable && $identified)
+        {{-- Pagamento. A confirmação vem só do provedor; esta página apenas consulta a situação. --}}
+        @if (($payable && $identified) || $order->status === OrderStatus::Processing)
             <section class="mt-8 rounded-(--radius-bilhete) border bg-cartao p-6" aria-labelledby="titulo-pagamento">
                 <h2 id="titulo-pagamento" class="font-display text-xl">Pagamento</h2>
                 <p class="mt-2 text-sm">Comprador: <strong>{{ $order->buyer_name }}</strong> · {{ $order->buyer_email }}</p>
-                <p class="mt-4 rounded-[10px] border border-aviso/30 bg-aviso-claro px-4 py-3 text-sm text-aviso">
-                    A cobrança por {{ $order->payment_method->label() }} ainda não está disponível neste ambiente.
-                    A integração com o provedor de pagamento está em desenvolvimento.
-                </p>
+
+                @if ($sandbox)
+                    <p class="mt-3 text-xs font-semibold text-aviso">Ambiente de testes: nenhum dinheiro real é cobrado.</p>
+                @endif
+
+                @if ($order->status === OrderStatus::Processing)
+                    <p class="mt-4 rounded-[10px] border border-aviso/30 bg-aviso-claro px-4 py-3 text-sm text-aviso" role="status">
+                        Seu pagamento está em análise pelo sistema de pagamento. Seus números continuam reservados; esta página atualiza sozinha.
+                    </p>
+                @elseif (! $payment)
+                    <form method="POST" action="{{ route('orders.pay', $order->public_code) }}" class="mt-5" x-data="{ sending: false }" @submit="sending = true">
+                        @csrf
+                        @if ($order->payment_method === PaymentMethod::CreditCard)
+                            <p class="text-sm text-tinta-suave">Você vai preencher os dados do cartão no ambiente seguro do provedor de pagamento. Eles não passam por este site.</p>
+                        @endif
+                        <button type="submit" class="btn btn-primary mt-3" :disabled="sending" :aria-busy="sending ? 'true' : 'false'">
+                            {{ $order->payment_method === PaymentMethod::Pix ? 'Gerar Pix de '.Format::brl($order->total_cents) : 'Pagar '.Format::brl($order->total_cents).' com cartão' }}
+                        </button>
+                    </form>
+                @elseif ($payment->status === \App\Enums\PaymentStatus::Failed)
+                    <p class="mt-4 rounded-[10px] border border-carimbo/30 bg-carimbo-claro px-4 py-3 text-sm text-carimbo" role="alert">
+                        O pagamento não foi aprovado. {{ $payment->failure_reason }} Você pode tentar de novo enquanto a reserva estiver valendo.
+                    </p>
+                    @if ($payment->invoice_url)
+                        <a href="{{ $payment->invoice_url }}" class="btn btn-primary mt-4" rel="noopener">Tentar pagar de novo</a>
+                    @endif
+                @elseif ($payment->method === PaymentMethod::Pix && $payment->pix_payload)
+                    <div class="mt-5 grid items-start gap-6 sm:grid-cols-[auto_1fr]">
+                        @if ($payment->pix_qr_base64)
+                            <img src="data:image/png;base64,{{ $payment->pix_qr_base64 }}" alt="QR Code do Pix de {{ Format::brl($payment->amount_cents) }}" class="size-56 rounded-[10px] border bg-white p-2">
+                        @endif
+                        <div class="space-y-4" x-data="{ copied: false }">
+                            <p class="text-sm">Valor: <strong class="num text-lg">{{ Format::brl($payment->amount_cents) }}</strong></p>
+                            <ol class="list-decimal space-y-1 pl-5 text-sm text-tinta-suave">
+                                <li>Abra o app do seu banco e escolha pagar com Pix.</li>
+                                <li>Leia o QR Code ou use o código "copia e cola".</li>
+                                <li>Pague até {{ $order->reserved_until->format('H:i') }} (horário de Brasília), enquanto a reserva vale.</li>
+                            </ol>
+                            <label class="grid gap-1 text-sm font-medium">
+                                Pix copia e cola
+                                <textarea readonly rows="3" class="num w-full rounded-[10px] border bg-papel p-3 text-xs break-all" @focus="$el.select()">{{ $payment->pix_payload }}</textarea>
+                            </label>
+                            <button type="button" class="btn btn-secondary"
+                                @click="navigator.clipboard.writeText(@js($payment->pix_payload)).then(() => { copied = true; setTimeout(() => copied = false, 3000) })">
+                                <span x-text="copied ? 'Código copiado' : 'Copiar código'">Copiar código</span>
+                            </button>
+                            <p class="sr-only" aria-live="polite" x-text="copied ? 'Código Pix copiado' : ''"></p>
+                        </div>
+                    </div>
+                    <p class="mt-5 text-sm text-tinta-suave" role="status">Assim que o pagamento for confirmado pelo banco, esta página atualiza sozinha.</p>
+                @elseif ($payment->invoice_url)
+                    <p class="mt-4 text-sm">A cobrança foi gerada. Conclua o pagamento na página segura do provedor:</p>
+                    <a href="{{ $payment->invoice_url }}" class="btn btn-primary mt-3" rel="noopener">
+                        {{ $payment->method === PaymentMethod::CreditCard ? 'Continuar pagamento com cartão' : 'Abrir página de pagamento' }}
+                    </a>
+                    <p class="mt-4 text-sm text-tinta-suave" role="status">Depois de pagar, volte para esta página: a confirmação aparece aqui automaticamente.</p>
+                @endif
+            </section>
+        @endif
+
+        @if ($order->status === OrderStatus::Confirmed)
+            <section class="mt-8 rounded-(--radius-bilhete) border-2 border-ok bg-ok-claro p-6" role="status">
+                <h2 class="font-display text-xl text-ok">Pagamento confirmado</h2>
+                <p class="mt-2">Confirmado em {{ $order->confirmed_at->format('d/m/Y \à\s H:i') }} (horário de Brasília). Seus números estão garantidos.</p>
+            </section>
+        @elseif ($order->status === OrderStatus::NeedsReview)
+            <section class="mt-8 rounded-(--radius-bilhete) border bg-talao-claro p-6" role="status">
+                <h2 class="font-display text-xl">Pedido em verificação</h2>
+                <p class="mt-2">Recebemos uma atualização de pagamento que precisa de verificação manual. Vamos entrar em contato pelo e-mail {{ $order->buyer_email }}. Se preferir, fale com o suporte informando o código do pedido.</p>
+            </section>
+        @elseif ($order->status === OrderStatus::Refunded)
+            <section class="mt-8 rounded-(--radius-bilhete) border bg-cartao p-6" role="status">
+                <h2 class="font-display text-xl">Pedido reembolsado</h2>
+                <p class="mt-2">O valor foi devolvido{{ $order->refunded_at ? ' em '.$order->refunded_at->format('d/m/Y') : '' }}. O prazo para aparecer na sua conta depende do banco ou da operadora do cartão.</p>
             </section>
         @endif
 
@@ -189,7 +265,7 @@
         <p class="mt-8 text-xs text-tinta-suave">Guarde o código <span class="num font-semibold text-tinta">{{ $order->public_code }}</span>. Ele identifica o seu pedido no suporte.</p>
     </div>
 
-    @if ($payable)
+    @if ($watching)
         @push('scripts')
             @livewireScripts
             <script>
@@ -208,7 +284,25 @@
                         },
                     }))
                 })
+
+                // Consulta a situação a cada 5 s e recarrega quando o pedido ou o pagamento mudam.
+                ;(() => {
+                    let url = @js(route('orders.status', $order->public_code));
+                    let known = @js(['order' => $order->status->value, 'payment' => $order->payments()->latest('id')->value('status')?->value]);
+                    let poll = async () => {
+                        try {
+                            let r = await fetch(url, { headers: { Accept: 'application/json' } })
+                            if (r.ok) {
+                                let now = await r.json()
+                                if (now.order !== known.order || now.payment !== known.payment) return window.location.reload()
+                            }
+                        } catch (e) {}
+                        setTimeout(poll, 5000)
+                    }
+                    setTimeout(poll, 5000)
+                })()
             </script>
         @endpush
     @endif
+
 </x-layouts::public>

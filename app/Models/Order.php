@@ -39,6 +39,7 @@ class Order extends Model
             'confirmed_at' => 'datetime',
             'expired_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 

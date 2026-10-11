@@ -35,6 +35,8 @@ class AuditLog extends Model
         'promotion.cancelled' => 'Promoção cancelada',
         'promotion.result_recorded' => 'Resultado registrado',
         'settings.updated' => 'Configurações alteradas',
+        'order.cancelled' => 'Pedido cancelado pelo painel',
+        'order.refund_requested' => 'Reembolso solicitado',
     ];
 
     public function actionLabel(): string
