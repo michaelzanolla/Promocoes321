@@ -72,6 +72,10 @@
         outline-offset: 2px;
     }
 
+    [x-cloak] {
+        display: none !important;
+    }
+
     /* Números de bilhete e valores: largura fixa para alinhar em colunas. */
     .num {
         @apply font-mono tabular-nums;
@@ -101,6 +105,36 @@
     .btn[aria-busy='true']::before {
         content: '';
         @apply size-4 animate-spin rounded-full border-2 border-current border-r-transparent;
+    }
+
+    /*
+     * Célula da grade de números. Cada estado muda forma e texto, não só a cor:
+     * livre (borda simples), minha (amarelo + ✓), reservado (listras), vendido (escuro + riscado).
+     */
+    .cel {
+        @apply relative flex items-center justify-center rounded-md border bg-cartao transition-colors select-none;
+    }
+
+    .cel-livre {
+        @apply hover:border-tinta hover:bg-talao-claro;
+    }
+
+    .cel-minha {
+        @apply border-tinta bg-talao font-semibold text-tinta;
+    }
+
+    button.cel-minha::after {
+        content: '✓';
+        @apply absolute top-0.5 right-1 text-[0.6rem] leading-none;
+    }
+
+    .cel-reservado {
+        @apply cursor-not-allowed border-dashed text-tinta-suave;
+        background-image: repeating-linear-gradient(-45deg, transparent 0 5px, color-mix(in srgb, var(--color-aviso) 22%, transparent) 5px 10px);
+    }
+
+    .cel-vendido {
+        @apply cursor-not-allowed border-tinta bg-tinta text-white/55 line-through;
     }
 
     /* Texto longo vindo de Markdown (páginas institucionais, descrição e regras das promoções). */

@@ -60,7 +60,9 @@ Abra <http://localhost:8000>. E-mails (confirmação, recuperação de senha) v�
 composer test
 ```
 
-Roda formatação (Pint), análise estática (PHPStan) e os testes (PHPUnit). Os testes usam o banco `promocoes_test` no mesmo MySQL do Docker, criado automaticamente na primeira subida do container. Se o container já existia antes disso, recrie-o com `docker compose down -v` e `docker compose up -d` (isso apaga o banco local).
+Roda formatação (Pint), análise estática (PHPStan) e os testes (PHPUnit).
+
+O `tests/Feature/ConcurrencyTest.php` prova que um número não pode ser vendido duas vezes: ele dispara cerca de 30 processos PHP ao mesmo tempo, cada um com sua conexão ao MySQL, disputando os mesmos números. Para rodar só ele: `php artisan test --filter=ConcurrencyTest`. Alguns ambientes restritos limitam quantos processos um comando pode criar; se aparecer `CreateProcess failed, error code: 5`, rode esse teste separado do `composer test`. Os testes usam o banco `promocoes_test` no mesmo MySQL do Docker, criado automaticamente na primeira subida do container. Se o container já existia antes disso, recrie-o com `docker compose down -v` e `docker compose up -d` (isso apaga o banco local).
 
 ## Perfis de acesso
 
@@ -82,6 +84,15 @@ Fica em `/admin` e usa o mesmo login do site (com 2FA, se ativado). Só administ
 - **Usuários**: criar (a pessoa recebe um e-mail para definir a própria senha), editar, ativar/desativar e ver o histórico de atividades. Usuários não são apagados.
 - **Auditoria**: registro somente leitura de todas as ações administrativas.
 - **Configurações**: dados do responsável, contato e textos da página inicial.
+
+## Como funciona a reserva
+
+1. Na página da promoção, **Escolher números** abre a grade. Ela consulta a situação dos números a cada 5 segundos, mas só para informar: quem decide é o servidor.
+2. **Reservar e continuar** reserva todos os números escolhidos de uma vez, ou nenhum. Se algum acabou de ser pego por outra pessoa, a tela mostra qual e mantém o resto da seleção.
+3. Na página do pedido, a pessoa informa os dados, escolhe a forma de pagamento e aceita as regras enquanto a reserva vale (prazo configurável por promoção).
+4. Reservas vencidas são liberadas na hora em que alguém disputa o número e, como limpeza, pelo agendador (`php artisan orders:expire`, a cada minuto via `schedule:run`).
+
+Compradores sem conta acessam o pedido pela mesma sessão do navegador ou pelo link secreto do pedido. Quem não tem acesso recebe "página não encontrada", sem confirmar que o código existe.
 
 ## Produção
 

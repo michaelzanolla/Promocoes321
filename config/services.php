@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    // Provedor de pagamento. ASAAS_ENV escolhe sandbox (testes) ou production (dinheiro real).
+    'asaas' => [
+        'env' => env('ASAAS_ENV', 'sandbox'),
+        'api_key' => env('ASAAS_API_KEY'),
+        'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
+        'base_url' => env('ASAAS_ENV', 'sandbox') === 'production'
+            ? 'https://api.asaas.com/v3'
+            : 'https://api-sandbox.asaas.com/v3',
+    ],
+
 ];

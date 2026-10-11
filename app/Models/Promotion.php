@@ -127,10 +127,12 @@ class Promotion extends Model
         $query->withCount([
             'items as sold_count' => fn (Builder $q) => $q->where('active', 1)
                 ->whereHas('order', fn (Builder $o) => $o->where('status', OrderStatus::Confirmed)),
+            // Ocupados sem estar pagos: reservas válidas, pagamentos em análise, pedidos em revisão
+            // ou reembolsados (números reembolsados não voltam sozinhos para a venda).
             'items as reserved_count' => fn (Builder $q) => $q->where('active', 1)
                 ->whereHas('order', fn (Builder $o) => $o
-                    ->whereIn('status', [OrderStatus::AwaitingPayment, OrderStatus::Processing])
-                    ->where('reserved_until', '>', now())),
+                    ->where('status', '!=', OrderStatus::Confirmed)
+                    ->where(fn (Builder $w) => $w->where('status', '!=', OrderStatus::AwaitingPayment)->orWhere('reserved_until', '>', now()))),
         ]);
     }
 

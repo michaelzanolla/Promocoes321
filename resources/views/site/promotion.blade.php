@@ -6,7 +6,7 @@
     $phase = $promotion->phase();
     $markdown = fn (?string $text) => Str::markdown((string) $text, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
     $organizer = ['name' => \App\Models\Setting::read('organizer_name'), 'document' => \App\Models\Setting::read('organizer_document'), 'city' => \App\Models\Setting::read('organizer_city')];
-    $date = fn ($d) => $d->format('d/m/Y \à\s H\hi');
+    $date = fn ($d) => $d->format('d/m/Y \à\s H\hi').' (horário de Brasília)';
 @endphp
 
 <x-layouts::public :title="$promotion->title">
@@ -106,7 +106,9 @@
                         <span class="num block text-2xl font-semibold">{{ Format::brl($promotion->unit_price_cents) }}</span>
                         <span class="text-xs text-tinta-suave">por número</span>
                     </p>
-                    @if ($phase !== PromotionPhase::Open)
+                    @if ($phase === PromotionPhase::Open)
+                        <a href="{{ route('numbers.show', $promotion->slug) }}" class="btn btn-primary">Escolher números</a>
+                    @else
                         <p class="max-w-[12rem] text-right text-sm text-tinta-suave">
                             @switch($phase)
                                 @case(PromotionPhase::Scheduled) A escolha de números abre quando a promoção começar. @break
