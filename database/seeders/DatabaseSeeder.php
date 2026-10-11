@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($title),
                 'title' => $title,
                 'summary' => 'Promoção fictícia, criada apenas para testar a plataforma.',
+                'description' => "Esta promoção existe só no ambiente de desenvolvimento.\n\nUse-a para testar a escolha de números, o pagamento no ambiente de testes e o comprovante.",
                 'prize' => "{$prize} (fictício)",
                 'category' => $category,
                 'total_numbers' => $total,

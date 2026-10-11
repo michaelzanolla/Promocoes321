@@ -12,7 +12,13 @@ export default defineConfig({
             ],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Archivo', {
+                    weights: [400, 500, 600, 700],
+                }),
+                bunny('Archivo Black', {
+                    weights: [400],
+                }),
+                bunny('IBM Plex Mono', {
                     weights: [400, 500, 600],
                 }),
             ],

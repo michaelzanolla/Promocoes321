@@ -8,42 +8,179 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Sistema de design — "talão de rifa".
+ * Papel frio de fundo, tinta petróleo para texto e confiança, amarelo-talão só para ações,
+ * vermelho-carimbo para "vendido" e erros, verde para "aberta" e "confirmado".
+ * Documentação: docs/design-system.md
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Archivo Black', 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
 
-    --color-zinc-50: #fafafa;
-    --color-zinc-100: #f5f5f5;
-    --color-zinc-200: #e5e5e5;
-    --color-zinc-300: #d4d4d4;
-    --color-zinc-400: #a3a3a3;
-    --color-zinc-500: #737373;
-    --color-zinc-600: #525252;
-    --color-zinc-700: #404040;
-    --color-zinc-800: #262626;
-    --color-zinc-900: #171717;
-    --color-zinc-950: #0a0a0a;
+    --color-papel: #f5f7f8;
+    --color-cartao: #ffffff;
+    --color-tinta: #12343b;
+    --color-tinta-suave: #4a6066;
+    --color-linha: #d3dcde;
+    --color-talao: #ffc83d;
+    --color-talao-escuro: #f0b000;
+    --color-talao-claro: #fff4d6;
+    --color-carimbo: #b8322a;
+    --color-carimbo-claro: #fbeceb;
+    --color-ok: #1d7a4c;
+    --color-ok-claro: #e6f4ec;
+    --color-aviso: #845400;
+    --color-aviso-claro: #fdf3e1;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
-}
+    /* Cinzas do Flux puxados para o tom da tinta. */
+    --color-zinc-50: #f5f7f8;
+    --color-zinc-100: #ebeff0;
+    --color-zinc-200: #d3dcde;
+    --color-zinc-300: #b4c1c4;
+    --color-zinc-400: #8a9a9e;
+    --color-zinc-500: #66787c;
+    --color-zinc-600: #4a6066;
+    --color-zinc-700: #34494f;
+    --color-zinc-800: #1f363c;
+    --color-zinc-900: #142a30;
+    --color-zinc-950: #0b1a1e;
 
-@layer theme {
-    .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
-    }
+    --color-accent: var(--color-talao);
+    --color-accent-content: var(--color-tinta);
+    --color-accent-foreground: var(--color-tinta);
+
+    --radius-bilhete: 14px;
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-linha, currentColor);
+    }
+
+    html {
+        @apply bg-papel text-tinta antialiased;
+    }
+
+    :focus-visible {
+        outline: 3px solid var(--color-tinta);
+        outline-offset: 2px;
+    }
+
+    /* Números de bilhete e valores: largura fixa para alinhar em colunas. */
+    .num {
+        @apply font-mono tabular-nums;
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] px-5 text-[0.95rem] font-semibold whitespace-nowrap transition-colors;
+    }
+
+    .btn-primary {
+        @apply bg-talao text-tinta hover:bg-talao-escuro;
+        box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.12);
+    }
+
+    .btn-secondary {
+        @apply border-tinta/25 text-tinta hover:border-tinta hover:bg-cartao border-2 bg-transparent;
+    }
+
+    .btn:disabled,
+    .btn[aria-disabled='true'] {
+        @apply cursor-not-allowed opacity-50;
+        box-shadow: none;
+    }
+
+    .btn[aria-busy='true']::before {
+        content: '';
+        @apply size-4 animate-spin rounded-full border-2 border-current border-r-transparent;
+    }
+
+    /* Texto longo vindo de Markdown (páginas institucionais, descrição e regras das promoções). */
+    .prose-pagina {
+        @apply max-w-prose space-y-4 leading-relaxed;
+
+        & ul {
+            @apply list-disc space-y-1 pl-5;
+        }
+
+        & ol {
+            @apply list-decimal space-y-1 pl-5;
+        }
+
+        & a {
+            @apply underline;
+        }
+
+        & h2,
+        & h3 {
+            @apply pt-2 font-bold;
+        }
+
+        & blockquote {
+            @apply rounded-[10px] border-l-4 border-talao bg-talao-claro px-4 py-3 text-sm;
+        }
+    }
+
+    /*
+     * Bilhete com canhoto picotado: a linha tracejada separa o canhoto, e dois recortes
+     * semicirculares (::before/::after do canhoto) fazem o "furo" do picote.
+     */
+    .bilhete {
+        @apply bg-cartao relative grid rounded-(--radius-bilhete) border;
+        grid-template-rows: 1fr auto;
+    }
+
+    .bilhete-canhoto {
+        @apply relative border-t-2 border-dashed;
+    }
+
+    .bilhete-canhoto::before,
+    .bilhete-canhoto::after {
+        content: '';
+        @apply bg-papel absolute top-0 size-5 -translate-y-1/2 rounded-full border;
+    }
+
+    .bilhete-canhoto::before {
+        left: 0;
+        translate: -50% -50%;
+        clip-path: inset(0 0 0 50%);
+    }
+
+    .bilhete-canhoto::after {
+        right: 0;
+        translate: 50% -50%;
+        clip-path: inset(0 50% 0 0);
+    }
+
+    @media (min-width: 40rem) {
+        .bilhete-horizontal {
+            grid-template-rows: none;
+            grid-template-columns: 1fr auto;
+        }
+
+        .bilhete-horizontal .bilhete-canhoto {
+            @apply border-t-0 border-l-2;
+        }
+
+        .bilhete-horizontal .bilhete-canhoto::before {
+            @apply top-0 left-0;
+            translate: -50% -50%;
+            clip-path: inset(50% 0 0 0);
+        }
+
+        .bilhete-horizontal .bilhete-canhoto::after {
+            @apply top-auto right-auto bottom-0 left-0;
+            translate: -50% 50%;
+            clip-path: inset(0 0 50% 0);
+        }
     }
 }
 
@@ -52,15 +189,44 @@
 }
 
 [data-flux-label] {
-    @apply  !mb-0 !leading-tight;
+    @apply !mb-0 !leading-tight;
 }
 
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply ring-tinta ring-offset-cartao outline-hidden ring-2 ring-offset-2;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* Único momento animado do site: o bilhete entra e o carimbo "bate" uma vez. */
+.hero-bilhete {
+    animation: bilhete-entra 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.hero-carimbo {
+    animation: carimbo-bate 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) 0.75s both;
+}
+
+@keyframes bilhete-entra {
+    from {
+        opacity: 0;
+        transform: translateY(24px) rotate(-8deg);
+    }
+}
+
+@keyframes carimbo-bate {
+    from {
+        opacity: 0;
+        scale: 1.8;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
