@@ -1,16 +1,13 @@
 <x-layouts::public>
-    {{-- Hero: o bilhete é a tese da página. Textos editáveis pelo painel numa fase futura. --}}
+    {{-- Hero: o bilhete é a tese da página. Textos editáveis em Painel > Configurações. --}}
     <section class="overflow-hidden">
         <div class="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 md:grid-cols-[1.1fr_1fr] md:pt-20 md:pb-24">
             <div>
                 <h1 class="font-display text-[2.6rem] leading-[1.02] tracking-tight sm:text-6xl">
-                    Escolha seus números.<br>
-                    <span class="box-decoration-clone bg-[linear-gradient(transparent_68%,var(--color-talao)_68%,var(--color-talao)_92%,transparent_92%)]">Concorra entre amigos.</span>
+                    {{ \App\Models\Setting::read('hero_title') }}<br>
+                    <span class="box-decoration-clone bg-[linear-gradient(transparent_68%,var(--color-talao)_68%,var(--color-talao)_92%,transparent_92%)]">{{ \App\Models\Setting::read('hero_highlight') }}</span>
                 </h1>
-                <p class="mt-6 max-w-md text-lg text-tinta-suave">
-                    Escolha uma promoção, marque os números que quiser e pague por Pix ou cartão.
-                    Assim que o pagamento é confirmado, você recebe o comprovante com os seus números.
-                </p>
+                <p class="mt-6 max-w-md text-lg text-tinta-suave">{{ \App\Models\Setting::read('hero_text') }}</p>
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="#promocoes" class="btn btn-primary">Ver promoções</a>
                     <a href="#como-funciona" class="btn btn-secondary">Como funciona</a>

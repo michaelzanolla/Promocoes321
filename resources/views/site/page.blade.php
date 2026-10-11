@@ -7,7 +7,7 @@
         </div>
 
         @if ($slug === 'contato')
-            @php($contact = config('platform.contact'))
+            @php($contact = ['email' => \App\Models\Setting::read('contact_email'), 'whatsapp' => \App\Models\Setting::read('contact_whatsapp')])
             <dl class="mt-8 grid gap-4 rounded-(--radius-bilhete) border bg-cartao p-6">
                 <div>
                     <dt class="text-sm text-tinta-suave">E-mail</dt>

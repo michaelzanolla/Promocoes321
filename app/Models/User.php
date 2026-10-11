@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\Role;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -35,7 +37,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 // nunca por dados enviados num formulário.
 #[Fillable(['name', 'email', 'password', 'phone'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
@@ -71,6 +73,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return Str::length($initials) > 1
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
+    }
+
+    /** Painel administrativo: só administradores ativos. */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isAdmin() && $this->is_active;
+    }
+
+    /**
+     * Ações registradas por este usuário no log de auditoria.
+     *
+     * @return HasMany<AuditLog, $this>
+     */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
     }
 
     public function isAdmin(): bool

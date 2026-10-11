@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $changes
+ */
 class AuditLog extends Model
 {
     public const UPDATED_AT = null;
@@ -14,6 +17,29 @@ class AuditLog extends Model
         return [
             'changes' => 'array',
         ];
+    }
+
+    public const ACTION_LABELS = [
+        'user.created' => 'Usuário criado',
+        'user.updated' => 'Usuário alterado',
+        'user.activated' => 'Conta ativada',
+        'user.deactivated' => 'Conta desativada',
+        'user.promoted_to_admin' => 'Promovido a administrador',
+        'promotion.created' => 'Promoção criada',
+        'promotion.updated' => 'Promoção alterada',
+        'promotion.duplicated' => 'Promoção duplicada',
+        'promotion.published' => 'Promoção publicada',
+        'promotion.paused' => 'Promoção pausada',
+        'promotion.resumed' => 'Promoção retomada',
+        'promotion.closed' => 'Promoção encerrada',
+        'promotion.cancelled' => 'Promoção cancelada',
+        'promotion.result_recorded' => 'Resultado registrado',
+        'settings.updated' => 'Configurações alteradas',
+    ];
+
+    public function actionLabel(): string
+    {
+        return self::ACTION_LABELS[$this->action] ?? $this->action;
     }
 
     /**

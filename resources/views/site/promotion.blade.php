@@ -5,11 +5,19 @@
 
     $phase = $promotion->phase();
     $markdown = fn (?string $text) => Str::markdown((string) $text, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
-    $organizer = config('platform.organizer');
+    $organizer = ['name' => \App\Models\Setting::read('organizer_name'), 'document' => \App\Models\Setting::read('organizer_document'), 'city' => \App\Models\Setting::read('organizer_city')];
     $date = fn ($d) => $d->format('d/m/Y \à\s H\hi');
 @endphp
 
 <x-layouts::public :title="$promotion->title">
+    @if ($preview ?? false)
+        <div role="status" class="border-b border-aviso/30 bg-aviso-claro">
+            <p class="mx-auto max-w-6xl px-4 py-3 text-sm font-semibold text-aviso sm:px-6">
+                Pré-visualização: esta promoção não está visível para o público ({{ $promotion->phase()->label() }}).
+            </p>
+        </div>
+    @endif
+
     <div class="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
         <nav aria-label="Você está em" class="text-sm text-tinta-suave">
             <a href="{{ route('home') }}#promocoes" class="hover:text-tinta hover:underline">Promoções</a>

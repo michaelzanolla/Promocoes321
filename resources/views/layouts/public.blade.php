@@ -6,8 +6,8 @@
         ['label' => 'Promoções', 'href' => route('home').'#promocoes'],
         ['label' => 'Como funciona', 'href' => route('home').'#como-funciona'],
     ];
-    $organizer = config('platform.organizer');
-    $contact = config('platform.contact');
+    $organizer = ['name' => \App\Models\Setting::read('organizer_name'), 'document' => \App\Models\Setting::read('organizer_document'), 'city' => \App\Models\Setting::read('organizer_city')];
+    $contact = ['email' => \App\Models\Setting::read('contact_email'), 'whatsapp' => \App\Models\Setting::read('contact_whatsapp')];
 @endphp
 
 <!DOCTYPE html>
@@ -32,6 +32,9 @@
 
                 <div class="hidden items-center gap-2 md:flex">
                     @auth
+                        @can('access-admin')
+                            <a href="{{ url('/admin') }}" class="rounded-md px-3 py-2 font-semibold hover:underline">Painel</a>
+                        @endcan
                         <a href="{{ route('dashboard') }}" class="btn btn-secondary">Minha conta</a>
                     @else
                         <a href="{{ route('login') }}" class="rounded-md px-3 py-2 font-semibold hover:underline">Entrar</a>

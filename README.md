@@ -36,9 +36,12 @@ No `.env`, defina uma senha para o banco local em `DB_PASSWORD` (qualquer valor;
 ```bash
 docker compose up -d
 php artisan migrate
+php artisan storage:link
 php artisan db:seed
 npm run build
 ```
+
+O `storage:link` cria o atalho `public/storage`, necessário para exibir as imagens enviadas pelo painel. Os arquivos do painel (Filament) são publicados automaticamente pelo `composer install`.
 
 O `db:seed` cria dados **fictícios** e mostra no terminal as senhas geradas para `admin@demo.test` e `participante@demo.test`. Elas não ficam gravadas em nenhum arquivo; para gerar novas, rode o `db:seed` de novo.
 
@@ -68,7 +71,17 @@ Roda formatação (Pint), análise estática (PHPStan) e os testes (PHPUnit). Os
 php artisan app:create-admin email@exemplo.com
 ```
 
-Não existe tela nem formulário que transforme um participante em administrador.
+Pelo site, só outro administrador (em **Painel > Usuários**) pode mudar o perfil de alguém. Nenhum formulário do site aceita esse campo.
+
+## Painel administrativo
+
+Fica em `/admin` e usa o mesmo login do site (com 2FA, se ativado). Só administradores com conta ativa entram.
+
+- **Painel de controle**: promoções, números, pedidos e valores. Reservas e pagamentos pendentes nunca entram como receita.
+- **Promoções**: criar, editar, duplicar, ver no site (inclusive rascunhos, como pré-visualização), publicar, pausar, retomar, encerrar, registrar resultado e cancelar. Preço, numeração e formas de pagamento travam depois do primeiro pedido. Só rascunhos sem pedidos podem ser excluídos.
+- **Usuários**: criar (a pessoa recebe um e-mail para definir a própria senha), editar, ativar/desativar e ver o histórico de atividades. Usuários não são apagados.
+- **Auditoria**: registro somente leitura de todas as ações administrativas.
+- **Configurações**: dados do responsável, contato e textos da página inicial.
 
 ## Produção
 

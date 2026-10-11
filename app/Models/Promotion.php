@@ -7,6 +7,7 @@ use App\Enums\PromotionPhase;
 use App\Enums\PromotionStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\PromotionFactory;
+use DomainException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +35,24 @@ class Promotion extends Model
 {
     /** @use HasFactory<PromotionFactory> */
     use HasFactory;
+
+    /** Campos que não podem mudar depois que existe qualquer pedido na promoção. */
+    public const LOCKED_AFTER_FIRST_ORDER = ['unit_price_cents', 'number_start', 'total_numbers', 'payment_methods'];
+
+    protected static function booted(): void
+    {
+        // A trava fica no model para valer em qualquer caminho (painel, console, código futuro).
+        static::updating(function (Promotion $promotion) {
+            if ($promotion->isDirty(self::LOCKED_AFTER_FIRST_ORDER) && $promotion->hasOrders()) {
+                throw new DomainException('Preço, numeração e formas de pagamento não podem mudar depois do primeiro pedido.');
+            }
+        });
+    }
+
+    public function hasOrders(): bool
+    {
+        return $this->orders()->exists();
+    }
 
     protected function casts(): array
     {
