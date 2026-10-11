@@ -10,14 +10,15 @@
             <!-- Token -->
             <input type="hidden" name="token" value="{{ request()->route('token') }}">
 
-            <!-- Email Address -->
+            <!-- E-mail: vem do link e fica travado (o link só vale para esse e-mail; o servidor também confere). -->
             <flux:input
                 name="email"
                 value="{{ request('email') }}"
                 :label="__('Email')"
                 type="email"
                 required
-                autocomplete="email"
+                autocomplete="username"
+                :readonly="filled(request('email'))"
             />
 
             <!-- Password -->

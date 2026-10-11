@@ -69,8 +69,8 @@ class AdminPanelTest extends TestCase
                 'title' => 'Bicicleta aro 29',
                 'slug' => 'bicicleta-aro-29',
                 'unit_price_cents' => '12.50',
-                'total_numbers' => 500,
-                'number_start' => 1,
+                'series_start' => 1,
+                'series_end' => 500,
                 'min_per_order' => 1,
                 'reservation_minutes' => 15,
                 'payment_methods' => ['pix'],
@@ -104,7 +104,8 @@ class AdminPanelTest extends TestCase
 
         Livewire::test(EditPromotion::class, ['record' => $promotion->getRouteKey()])
             ->assertFormFieldDisabled('unit_price_cents')
-            ->assertFormFieldDisabled('total_numbers')
+            ->assertFormFieldDisabled('series_start')
+            ->assertFormFieldDisabled('series_end')
             ->fillForm(['title' => 'Novo título'])
             ->call('save')
             ->assertHasNoFormErrors();

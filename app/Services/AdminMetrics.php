@@ -49,7 +49,8 @@ class AdminMetrics
      */
     public function orders(): array
     {
-        $count = fn (array $statuses) => Order::whereIn('status', $statuses)->count();
+        // Só pedidos do site: marcações de venda fora do site não são pedidos de verdade.
+        $count = fn (array $statuses) => Order::whereIn('status', $statuses)->where('source', '!=', Order::SOURCE_OFFLINE)->count();
 
         return [
             'pending' => $count([OrderStatus::AwaitingPayment, OrderStatus::Processing]),

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PromotionPhase;
 use App\Exceptions\NumbersUnavailable;
+use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Promotion;
@@ -95,6 +96,133 @@ class ReserveNumbers
         }
 
         return ['order' => $order, 'token' => $token];
+    }
+
+    /** Teto por marcação de números vendidos fora do site. */
+    public const HARD_MAX_OFFLINE = 10000;
+
+    /**
+     * Marca números como vendidos fora do site (administrador). Usa a mesma trava única da reserva:
+     * se algum já está reservado ou vendido no site, nada é marcado.
+     *
+     * @param  list<int>  $numbers
+     *
+     * @throws DomainException|NumbersUnavailable
+     */
+    public function markSoldOffline(Promotion $promotion, array $numbers, ?string $note = null): Order
+    {
+        foreach ($numbers as $n) {
+            if ($n < $promotion->number_start || $n > $promotion->lastNumber()) {
+                throw new DomainException('O número '.$promotion->formatNumber($n).' está fora da faixa vendida no site ('
+                    .$promotion->formatNumber($promotion->number_start).' a '.$promotion->formatNumber($promotion->lastNumber()).').');
+            }
+        }
+
+        try {
+            $order = DB::transaction(function () use ($promotion, $numbers, $note) {
+                $locked = Promotion::whereKey($promotion->id)->sharedLock()->firstOrFail();
+                $this->ensureOfflineSalesAllowed($locked);
+                $this->expireOrders->expireLocked($this->staleOrderIdsHolding($promotion, $numbers));
+
+                $order = new Order;
+                $order->forceFill([
+                    'public_code' => $this->newPublicCode(),
+                    'access_token' => Str::random(40),
+                    'checkout_key' => (string) Str::uuid(),
+                    'promotion_id' => $promotion->id,
+                    'source' => Order::SOURCE_OFFLINE,
+                    'internal_note' => filled($note) ? Str::limit(trim($note), 255, '') : null,
+                    'buyer_name' => 'Venda fora do site',
+                    'buyer_email' => '',
+                    'buyer_cpf' => '',
+                    'quantity' => count($numbers),
+                    'unit_price_cents' => 0, // o valor foi recebido fora: não entra no financeiro do site
+                    'total_cents' => 0,
+                    'status' => OrderStatus::Confirmed,
+                    'confirmed_at' => now(),
+                    'reserved_until' => now(),
+                ])->save();
+
+                foreach (array_chunk($numbers, 1000) as $chunk) {
+                    OrderItem::insert(array_map(fn (int $n) => [
+                        'order_id' => $order->id, 'promotion_id' => $promotion->id, 'number' => $n, 'active' => 1,
+                    ], $chunk));
+                }
+
+                return $order;
+            }, attempts: 3);
+        } catch (QueryException $e) {
+            if (! $this->isDuplicateKey($e)) {
+                throw $e;
+            }
+
+            throw new NumbersUnavailable($this->takenAmong($promotion, $numbers));
+        }
+
+        AuditLog::record('order.offline_marked', $order, ['count' => count($numbers), 'note' => $order->internal_note]);
+
+        return $order;
+    }
+
+    /** Desfaz uma marcação de venda fora do site: os números voltam a ficar disponíveis no site. */
+    public function unmarkOffline(Order $order): void
+    {
+        if (! $order->isOffline() || $order->status !== OrderStatus::Confirmed) {
+            throw new DomainException('Só marcações de venda fora do site podem ser desfeitas.');
+        }
+
+        DB::transaction(function () use ($order) {
+            $this->ensureOfflineSalesAllowed(Promotion::whereKey($order->promotion_id)->sharedLock()->firstOrFail());
+            OrderItem::where('order_id', $order->id)->update(['active' => null]);
+            $order->forceFill(['status' => OrderStatus::Cancelled, 'cancelled_at' => now()])->save();
+        });
+
+        AuditLog::record('order.offline_unmarked', $order, ['count' => $order->quantity]);
+    }
+
+    /**
+     * "507, 512, 600-650" → [507, 512, 600, 601, ..., 650].
+     *
+     * @return list<int>
+     *
+     * @throws DomainException
+     */
+    public static function parseList(string $input): array
+    {
+        $numbers = [];
+        $normalized = (string) preg_replace('/\s*-\s*/', '-', trim($input));
+
+        foreach (preg_split('/[\s,;]+/', $normalized, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $part) {
+            if (preg_match('/^(\d+)(?:-(\d+))?$/', $part, $m) !== 1) {
+                throw new DomainException("Não entendi \"{$part}\". Use números e faixas separados por vírgula, como 507, 512, 600-650.");
+            }
+            $from = (int) $m[1];
+            $to = isset($m[2]) ? (int) $m[2] : $from;
+            if ($to < $from) {
+                throw new DomainException("A faixa \"{$part}\" está invertida: o primeiro número precisa ser o menor.");
+            }
+            if ($to - $from + 1 + count($numbers) > self::HARD_MAX_OFFLINE) {
+                throw new DomainException('Marque no máximo '.self::HARD_MAX_OFFLINE.' números por vez.');
+            }
+            for ($n = $from; $n <= $to; $n++) {
+                $numbers[$n] = $n;
+            }
+        }
+
+        if ($numbers === []) {
+            throw new DomainException('Informe pelo menos um número.');
+        }
+        ksort($numbers);
+
+        return array_values($numbers);
+    }
+
+    /** Vendas fora do site só valem enquanto a ação não foi encerrada. */
+    private function ensureOfflineSalesAllowed(Promotion $promotion): void
+    {
+        if (! in_array($promotion->phase(), [PromotionPhase::Draft, PromotionPhase::Scheduled, PromotionPhase::Open, PromotionPhase::Paused], true)) {
+            throw new DomainException('Depois que a promoção é encerrada, os números vendidos fora do site não podem mais ser alterados.');
+        }
     }
 
     /**

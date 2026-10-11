@@ -20,8 +20,8 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -43,6 +43,59 @@ class PromotionResource extends Resource
     /** Sem SVG: um SVG enviado pode conter script e é servido pelo próprio site. */
     public const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+    public const MAX_NUMBERS = 100000;
+
+    /** A faixa do site precisa estar dentro da numeração da ação. */
+    private static function insideSeries(Get $get): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($get) {
+            if ((int) $value < (int) $get('series_start') || (int) $value > (int) $get('series_end')) {
+                $fail('A faixa do site precisa estar dentro da numeração da ação ('.$get('series_start').' a '.$get('series_end').').');
+            }
+        };
+    }
+
+    /**
+     * Tela → banco: a faixa do site vira number_start/total_numbers (usados pela grade e pela reserva).
+     * Campos travados (promoção com pedidos) não chegam aqui e ficam como estão.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function numberingToModel(array $data): array
+    {
+        $scope = $data['online_scope'] ?? 'all';
+        $onlineEnd = $data['online_end'] ?? null;
+        unset($data['online_scope'], $data['online_end']);
+
+        if (! array_key_exists('series_start', $data)) {
+            return $data;
+        }
+
+        [$from, $to] = $scope === 'range'
+            ? [(int) $data['number_start'], (int) $onlineEnd]
+            : [(int) $data['series_start'], (int) $data['series_end']];
+
+        return [...$data, 'number_start' => $from, 'total_numbers' => $to - $from + 1];
+    }
+
+    /**
+     * Banco → tela.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function numberingToForm(array $data): array
+    {
+        $last = (int) $data['number_start'] + (int) $data['total_numbers'] - 1;
+        $data['series_start'] ??= $data['number_start'];
+        $data['series_end'] ??= $last;
+        $data['online_end'] = $last;
+        $data['online_scope'] = (int) $data['series_start'] === (int) $data['number_start'] && (int) $data['series_end'] === $last ? 'all' : 'range';
+
+        return $data;
+    }
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
     protected static ?string $recordTitleAttribute = 'title';
@@ -59,7 +112,6 @@ class PromotionResource extends Resource
     {
         // Depois do primeiro pedido estes campos ficam travados (a regra também vale no model).
         $locked = fn (?Promotion $record): bool => (bool) $record?->hasOrders();
-        $lockedHint = 'Travado: a promoção já tem pedidos.';
 
         return $schema->columns(1)->components([
             Section::make('Conteúdo')->columns(2)->components([
@@ -88,28 +140,45 @@ class PromotionResource extends Resource
                     ])->columns(2)->defaultItems(0)->addActionLabel('Adicionar imagem')->collapsible()->columnSpanFull(),
             ]),
 
-            Section::make('Números e valores')->columns(3)->components([
-                TextInput::make('unit_price_cents')->label('Preço por número')->prefix('R$')->required()
-                    ->numeric()->minValue(0.01)->step(0.01)
-                    ->formatStateUsing(fn ($state) => $state === null ? null : number_format($state / 100, 2, '.', ''))
-                    ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100))
-                    ->disabled($locked)->hint(fn (?Promotion $record) => $locked($record) ? $lockedHint : null),
-                TextInput::make('total_numbers')->label('Quantidade de números')->required()->integer()->minValue(1)->maxValue(100000)
-                    ->disabled($locked)->hint(fn (?Promotion $record) => $locked($record) ? $lockedHint : null),
-                Select::make('number_start')->label('Numeração começa em')->options([0 => '0 (ex.: 000 a 999)', 1 => '1 (ex.: 0001 a 1000)'])
-                    ->default(1)->required()->selectablePlaceholder(false)
-                    ->disabled($locked),
-                TextInput::make('min_per_order')->label('Mínimo por pedido')->integer()->minValue(1)->default(1)->required(),
-                TextInput::make('max_per_order')->label('Máximo por pedido')->integer()->minValue(1)->helperText('Vazio = sem limite.')
-                    ->gte('min_per_order'),
-                TextInput::make('reservation_minutes')->label('Prazo da reserva (minutos)')->integer()->minValue(5)->maxValue(1440)->default(15)->required()
-                    ->helperText('Tempo para pagar antes de os números voltarem a ficar livres.'),
-                CheckboxList::make('payment_methods')->label('Formas de pagamento')
-                    ->options(collect(PaymentMethod::cases())->mapWithKeys(fn (PaymentMethod $m) => [$m->value => $m->label()])->all())
-                    ->default([PaymentMethod::Pix->value])->required()->minItems(1)
-                    ->disabled($locked),
-                Toggle::make('allow_random')->label('Permitir números aleatórios')->default(true)->inline(false),
-            ]),
+            // Um aviso só para a seção: avisos por campo quebravam o alinhamento dos rótulos.
+            Section::make('Números e valores')->columns(3)
+                ->description(fn (?Promotion $record) => $locked($record) ? 'Preço, numeração e formas de pagamento estão travados porque a promoção já tem pedidos.' : null)
+                ->components([
+                    TextInput::make('unit_price_cents')->label('Preço por número')->prefix('R$')->required()
+                        ->numeric()->minValue(0.01)->step(0.01)
+                        ->formatStateUsing(fn ($state) => $state === null ? null : number_format($state / 100, 2, '.', ''))
+                        ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100))
+                        ->disabled($locked),
+                    // Numeração da ação inteira e a parte vendida no site (ver numberingToModel()).
+                    TextInput::make('series_start')->label('Primeiro número da ação')->required()->integer()->minValue(0)->default(1)
+                        ->helperText('Ex.: 1 (de 0001 a 1000) ou 0 (de 000 a 999).')
+                        ->live(onBlur: true)->disabled($locked),
+                    TextInput::make('series_end')->label('Último número da ação')->required()->integer()->gte('series_start')
+                        ->rule(fn (Get $get) => function (string $attribute, mixed $value, Closure $fail) use ($get) {
+                            if ((int) $value - (int) $get('series_start') + 1 > self::MAX_NUMBERS) {
+                                $fail('A ação pode ter no máximo '.number_format(self::MAX_NUMBERS, 0, ',', '.').' números.');
+                            }
+                        })
+                        ->live(onBlur: true)->disabled($locked),
+                    Radio::make('online_scope')->label('Vender no site')->default('all')->live()->disabled($locked)
+                        ->options(['all' => 'Todos os números da ação', 'range' => 'Só uma faixa (o restante é vendido fora do site)']),
+                    TextInput::make('number_start')->label('Faixa do site: de')->integer()
+                        ->visible(fn (Get $get) => $get('online_scope') === 'range')->required()
+                        ->rule(fn (Get $get) => self::insideSeries($get))->disabled($locked),
+                    TextInput::make('online_end')->label('Faixa do site: até')->integer()->gte('number_start')
+                        ->visible(fn (Get $get) => $get('online_scope') === 'range')->required()
+                        ->rule(fn (Get $get) => self::insideSeries($get))->disabled($locked),
+                    TextInput::make('min_per_order')->label('Mínimo por pedido')->integer()->minValue(1)->default(1)->required(),
+                    TextInput::make('max_per_order')->label('Máximo por pedido')->integer()->minValue(1)->helperText('Vazio = sem limite.')
+                        ->gte('min_per_order'),
+                    TextInput::make('reservation_minutes')->label('Prazo da reserva (minutos)')->integer()->minValue(5)->maxValue(1440)->default(15)->required()
+                        ->helperText('Tempo para pagar antes de os números voltarem a ficar livres.'),
+                    CheckboxList::make('payment_methods')->label('Formas de pagamento')
+                        ->options(collect(PaymentMethod::cases())->mapWithKeys(fn (PaymentMethod $m) => [$m->value => $m->label()])->all())
+                        ->default([PaymentMethod::Pix->value])->required()->minItems(1)
+                        ->disabled($locked),
+                    Toggle::make('allow_random')->label('Permitir números aleatórios')->default(true)->inline(false),
+                ]),
 
             Section::make('Datas')->columns(2)->components([
                 DateTimePicker::make('starts_at')->label('Início')->seconds(false)->native(false)->displayFormat('d/m/Y H:i'),

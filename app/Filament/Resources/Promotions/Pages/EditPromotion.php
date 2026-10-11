@@ -39,6 +39,16 @@ class EditPromotion extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return PromotionResource::numberingToForm($data);
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return PromotionResource::numberingToModel($data);
+    }
+
     protected function afterSave(): void
     {
         $changes = Arr::except($this->record->getChanges(), ['updated_at']);

@@ -123,8 +123,8 @@ class PromotionLifecycle
             throw new DomainException('O resultado só pode ser registrado depois que a promoção for encerrada.');
         }
 
-        if ($number < $promotion->number_start || $number > $promotion->lastNumber()) {
-            throw new DomainException('O número sorteado precisa estar entre '.$promotion->formatNumber($promotion->number_start).' e '.$promotion->formatNumber($promotion->lastNumber()).'.');
+        if ($number < $promotion->seriesStart() || $number > $promotion->seriesEnd()) {
+            throw new DomainException('O número sorteado precisa estar entre '.$promotion->formatNumber($promotion->seriesStart()).' e '.$promotion->formatNumber($promotion->seriesEnd()).'.');
         }
 
         if ($pending = $this->pendingOrdersCount($promotion)) {

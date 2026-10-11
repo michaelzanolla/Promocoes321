@@ -37,6 +37,13 @@ class AuditLog extends Model
         'settings.updated' => 'Configurações alteradas',
         'order.cancelled' => 'Pedido cancelado pelo painel',
         'order.refund_requested' => 'Reembolso solicitado',
+        'order.offline_marked' => 'Números marcados como vendidos fora do site',
+        'order.offline_unmarked' => 'Marcação de venda fora do site desfeita',
+        'auth.login' => 'Entrou no sistema',
+        'auth.failed' => 'Login recusado: e-mail ou senha errados',
+        'auth.inactive' => 'Login recusado: conta desativada',
+        'auth.two_factor_failed' => 'Login recusado: código de dois fatores errado',
+        'auth.throttled' => 'Login bloqueado por excesso de tentativas',
     ];
 
     public function actionLabel(): string
@@ -46,11 +53,12 @@ class AuditLog extends Model
 
     /**
      * @param  array<string, mixed>  $changes
+     * @param  ?User  $actor  quem agiu, quando ainda não é o usuário da sessão (ex.: no momento do login)
      */
-    public static function record(string $action, ?Model $subject = null, array $changes = []): self
+    public static function record(string $action, ?Model $subject = null, array $changes = [], ?User $actor = null): self
     {
         return self::forceCreate([
-            'user_id' => auth()->id(),
+            'user_id' => $actor->id ?? auth()->id(),
             'action' => $action,
             'subject_type' => $subject?->getMorphClass(),
             'subject_id' => $subject?->getKey(),

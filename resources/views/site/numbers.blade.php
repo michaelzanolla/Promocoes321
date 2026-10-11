@@ -4,7 +4,7 @@
     $config = [
         'start' => $promotion->number_start,
         'end' => $promotion->lastNumber(),
-        'digits' => strlen((string) $promotion->lastNumber()),
+        'digits' => strlen((string) $promotion->seriesEnd()),
         'price' => $promotion->unit_price_cents,
         'min' => $promotion->min_per_order,
         'max' => min($promotion->max_per_order ?? \App\Services\ReserveNumbers::HARD_MAX_PER_ORDER, \App\Services\ReserveNumbers::HARD_MAX_PER_ORDER),

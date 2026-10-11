@@ -126,6 +126,9 @@
             <section class="mt-12 rounded-(--radius-bilhete) border-2 border-tinta bg-talao-claro p-6" aria-labelledby="titulo-resultado">
                 <h2 id="titulo-resultado" class="font-display text-2xl">Resultado</h2>
                 <p class="mt-3">Número sorteado: <span class="num text-2xl font-semibold">{{ $promotion->formatNumber($promotion->result_number) }}</span></p>
+                @if ($promotion->resultSoldOffline())
+                    <p class="text-sm">Este número foi vendido fora do site.</p>
+                @endif
                 @if ($promotion->result_published_at)
                     <p class="text-sm text-tinta-suave">Publicado em {{ $date($promotion->result_published_at) }}</p>
                 @endif

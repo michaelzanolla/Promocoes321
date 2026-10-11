@@ -34,6 +34,14 @@ class Order extends Model
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
 
+    /** Números marcados pelo administrador como vendidos fora do site (sem comprador, pagamento ou comprovante). */
+    public const SOURCE_OFFLINE = 'offline';
+
+    public function isOffline(): bool
+    {
+        return $this->source === self::SOURCE_OFFLINE;
+    }
+
     protected function casts(): array
     {
         return [

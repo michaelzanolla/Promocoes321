@@ -264,3 +264,11 @@ select:focus[data-flux-control] {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Campo somente leitura (ex.: e-mail do link de redefinição de senha): fora das camadas para valer
+   sobre o fundo branco dos componentes do Flux. */
+input[readonly] {
+    background-color: var(--color-papel);
+    color: var(--color-tinta-suave);
+    cursor: default;
+}

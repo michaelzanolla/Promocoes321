@@ -11,6 +11,7 @@ use App\Payments\PaymentGatewayException;
 use App\Payments\ReconcilePayments;
 use App\Payments\RefundOrder;
 use App\Services\CancelOrder;
+use App\Services\ReserveNumbers;
 use DomainException;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -28,6 +29,7 @@ class ViewOrder extends ViewRecord
     {
         return [
             Action::make('open')->label('Ver página do pedido')->icon(Heroicon::OutlinedEye)->color('gray')
+                ->hidden(fn () => $this->record->isOffline())
                 ->url(fn () => route('orders.show', $this->record->public_code))->openUrlInNewTab(),
 
             Action::make('sync')->label('Consultar no Asaas')->icon(Heroicon::OutlinedArrowPath)->color('gray')
@@ -55,6 +57,12 @@ class ViewOrder extends ViewRecord
                     $cancel($this->record);
                     AuditLog::record('order.cancelled', $this->record);
                 }, 'Pedido cancelado.')),
+
+            Action::make('unmarkOffline')->label('Desfazer marcação')->icon(Heroicon::OutlinedArrowUturnLeft)->color('danger')
+                ->visible(fn () => $this->record->isOffline() && $this->record->status === OrderStatus::Confirmed)
+                ->requiresConfirmation()
+                ->modalDescription('Estes números deixam de constar como vendidos fora do site e voltam a ficar disponíveis no site.')
+                ->action(fn (ReserveNumbers $reserve) => $this->guard(fn () => $reserve->unmarkOffline($this->record), 'Marcação desfeita. Os números voltaram a ficar disponíveis.')),
         ];
     }
 

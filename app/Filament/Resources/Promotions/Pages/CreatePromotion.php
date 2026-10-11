@@ -26,6 +26,11 @@ class CreatePromotion extends CreateRecord
         return $promotion;
     }
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return PromotionResource::numberingToModel($data);
+    }
+
     protected function afterCreate(): void
     {
         AuditLog::record('promotion.created', $this->record);

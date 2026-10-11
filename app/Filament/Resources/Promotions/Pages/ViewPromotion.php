@@ -21,6 +21,11 @@ class ViewPromotion extends ViewRecord
         return 'Situação: '.$this->record->phase()->label().($this->record->is_demo ? ' · Fictícia (não aparece em produção)' : '');
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return PromotionResource::numberingToForm($data);
+    }
+
     protected function getHeaderActions(): array
     {
         return PromotionActions::all();

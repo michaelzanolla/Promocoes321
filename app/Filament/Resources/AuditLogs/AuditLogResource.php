@@ -41,7 +41,7 @@ class AuditLogResource extends Resource
     {
         return $schema->columns(2)->components([
             TextEntry::make('created_at')->label('Quando')->dateTime('d/m/Y H:i:s'),
-            TextEntry::make('user.name')->label('Quem')->placeholder('Sistema'),
+            TextEntry::make('actor')->label('Quem')->state(fn (AuditLog $record) => self::actor($record)),
             TextEntry::make('action')->label('Ação')->formatStateUsing(fn (AuditLog $record) => $record->actionLabel()),
             TextEntry::make('subject')->label('Registro')->state(fn (AuditLog $record) => self::subject($record)),
             TextEntry::make('ip')->label('IP')->placeholder('—'),
@@ -71,16 +71,23 @@ class AuditLogResource extends Resource
     {
         return [
             TextColumn::make('created_at')->label('Quando')->dateTime('d/m/Y H:i')->sortable(),
-            TextColumn::make('user.name')->label('Quem')->placeholder('Sistema'),
+            TextColumn::make('actor')->label('Quem')->state(fn (AuditLog $record) => self::actor($record)),
             TextColumn::make('action')->label('Ação')->formatStateUsing(fn (AuditLog $record) => $record->actionLabel()),
             TextColumn::make('subject')->label('Registro')->state(fn (AuditLog $record) => self::subject($record)),
         ];
     }
 
+    /** Tentativas de login sem conta identificada vêm de um visitante, não do sistema. */
+    public static function actor(AuditLog $record): string
+    {
+        return $record->user->name ?? (str_starts_with($record->action, 'auth.') ? 'Visitante' : 'Sistema');
+    }
+
     public static function subject(AuditLog $record): string
     {
         if ($record->subject_type === null) {
-            return '—';
+            // Login com e-mail sem conta: mostra o e-mail tentado.
+            return isset($record->changes['e-mail']) ? 'E-mail '.$record->changes['e-mail'] : '—';
         }
 
         $type = ['App\Models\Promotion' => 'Promoção', 'App\Models\User' => 'Usuário', 'App\Models\Order' => 'Pedido'][$record->subject_type] ?? class_basename($record->subject_type);

@@ -29,6 +29,20 @@ Na branch `fase-8-exemplos-status` (a partir da `fase-8-producao`, commitada):
 - Regra nova: com a promoção pausada ou encerrada, nenhuma cobrança nova é gerada (a página do pedido avisa; Pix já gerado e pago dentro do prazo continua valendo). Avisos do painel e plano da Fase 1 atualizados.
 - Testes novos: exemplo de toda situação existe; todas as telas abrem em todas as situações; o comprador não consegue cancelar, pagar ou alterar dados fora de "aguardando pagamento".
 
+Redefinição de senha nas boas práticas (commitada na branch `fase-8-numeracao`):
+
+- O e-mail vem do link e fica travado (somente leitura, com aparência própria). O servidor já recusava trocar a senha de outro e-mail com o link: agora há teste para isso.
+- "Esqueci minha senha" responde igual exista ou não a conta (antes dizia "Não existe nenhum usuário com o e-mail indicado").
+- Redefinir a senha encerra as sessões abertas em outros aparelhos.
+
+Na branch `fase-8-numeracao` (a partir da `fase-8-exemplos-status`, commitada), ação que começou fora do site:
+
+- Promoção tem a numeração da ação inteira (`series_start`/`series_end`, ex.: 0001 a 1000) e a faixa vendida no site (`number_start`/`total_numbers`, ex.: 0501 a 1000). A tela de criação pede primeiro e último número e "Vender no site: todos | só uma faixa". Zeros à esquerda seguem a ação inteira. O site mostra só a sua faixa.
+- Painel > promoção > "Números vendidos fora do site": marca números da faixa do site (ex.: `507, 512, 600-650`) com anotação interna. Usa a mesma trava da reserva (sem conflito com o site); se algum já estiver reservado/vendido, nada é marcado. Contam como vendidos; não entram como pedidos nem no financeiro. Desfazer: Pedidos > origem "Fora do site" > "Desfazer marcação" (só antes do encerramento).
+- Sorteio aceita qualquer número da ação; se for vendido fora, a página diz "Este número foi vendido fora do site".
+- Auditoria registra logins: entrada (com "lembrar de mim"), senha errada (só o e-mail, nunca a senha), conta desativada, código de dois fatores errado e bloqueio por excesso de tentativas (no máximo 1 registro por minuto por e-mail+IP). O bloqueio agora mostra aviso na tela de login em vez da página de erro 429.
+- Coluna `number_start` ampliada (antes aceitava só até 255). Exemplo novo: "[FICTÍCIA] Iniciada fora do site: moto".
+
 Próximo passo ao retomar:
 
 1. **Aguardando a HostGator** ativar o shell SSH. Depois: testar `ssh promocoes`, conferir `php -v` e `mysqldump`. Subdomínio: promocoes.osrv.com.br (já existe, mesmo servidor); a raiz do documento ainda precisa apontar para `promocoes/public`.
@@ -59,6 +73,11 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 - [ ] **Confirmar por escrito com o Asaas** que a atividade (rifa/ação entre amigos) é aceita na conta. A pergunta já feita confirmou as formas de pagamento, não a atividade.
 - [ ] **Textos legais definitivos** (termos, privacidade, cancelamento e reembolso, regras): hoje são provisórios, marcados como "pendente de revisão jurídica", em `resources/content/*.md`.
 - [ ] **Dados do responsável e contato** reais em Painel > Configurações.
+
+### Segurança do login (validar no final, antes de publicar)
+
+- [ ] Decidir os reforços contra ataque de senha distribuído (muitos IPs, poucas tentativas cada), que hoje passa pelos limites por IP. Opções: (1) limite por conta vindo de qualquer IP, ex.: 20 tentativas erradas por hora por e-mail (efeito colateral: atacante pode travar o login de uma conta por até 1 h); (2) dois fatores obrigatório para administradores; (3) CAPTCHA Cloudflare Turnstile (serviço externo, conta na Cloudflare). Recomendado: 1 e 2. Antes de decidir, olhar na Auditoria se há "Login recusado" ou "Login bloqueado" em volume.
+- [ ] Envio do e-mail de "Esqueci minha senha" depois de responder à página (hoje o tempo de resposta ainda diferencia e-mail cadastrado de não cadastrado).
 
 ### Identidade e conteúdo
 

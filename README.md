@@ -246,3 +246,4 @@ Antes de trocar `ASAAS_ENV` para `production`:
 - [ ] Execução completa no sandbox dentro da HostGator: reserva, Pix, cartão, webhook, e-mail recebido, comprovante, reembolso e expiração de reserva.
 - [ ] Backup diário rodando e um restore testado.
 - [ ] `APP_DEBUG=false` (uma página de erro não pode mostrar detalhes técnicos).
+- [ ] Segurança do login decidida (reforços contra ataque de senha distribuído: ver `docs/progresso.md`, "Segurança do login").

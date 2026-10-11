@@ -17,7 +17,6 @@ use App\Services\ExpireOrders;
 use App\Services\PromotionLifecycle;
 use App\Services\ReserveNumbers;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -88,14 +87,22 @@ class StatusExamplesSeeder extends Seeder
         $this->order($cancelled, [3], OrderStatus::Confirmed);
         $this->order($cancelled, [4], OrderStatus::Refunded);
         $this->lifecycle->cancel($cancelled);
+
+        // Ação que começou fora do site: numeração 0001 a 1000, site vende só 0501 a 1000,
+        // com alguns números da faixa do site também vendidos fora (marcados pelo administrador).
+        $mixed = $this->promotion('Iniciada fora do site: moto', [
+            'series_start' => 1, 'series_end' => 1000, 'number_start' => 501, 'total_numbers' => 500,
+        ]);
+        $this->reserve->markSoldOffline($mixed, ReserveNumbers::parseList('507, 512, 600-650'), 'Talão do João (exemplo fictício)');
+        $this->order($mixed, [700, 701], OrderStatus::Confirmed, $participant);
     }
 
     /**
      * Começa sempre aberta (é quando aceita pedidos); a situação final vem depois.
      *
-     * @param  array{starts_at?: CarbonImmutable, ends_at?: CarbonImmutable}  $dates
+     * @param  array<string, mixed>  $extra  datas, numeração etc. que diferem do padrão
      */
-    private function promotion(string $name, array $dates = []): Promotion
+    private function promotion(string $name, array $extra = []): Promotion
     {
         $title = "[FICTÍCIA] {$name}";
 
@@ -112,8 +119,9 @@ class StatusExamplesSeeder extends Seeder
             'draw_info' => 'Sem apuração real: promoção de demonstração.',
             'is_demo' => true,
             'status' => PromotionStatus::Published,
-            'starts_at' => $dates['starts_at'] ?? now()->subDays(2),
-            'ends_at' => $dates['ends_at'] ?? now()->addYear(),
+            'starts_at' => now()->subDays(2),
+            'ends_at' => now()->addYear(),
+            ...$extra,
         ]);
     }
 

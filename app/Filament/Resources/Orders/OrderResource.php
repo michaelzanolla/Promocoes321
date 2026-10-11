@@ -88,6 +88,10 @@ class OrderResource extends Resource
                     ->color(fn (OrderStatus $state) => self::statusColor($state)),
                 TextEntry::make('review_reason')->label('Motivo da análise')->columnSpanFull()->color('danger')
                     ->visible(fn (Order $record) => $record->status === OrderStatus::NeedsReview),
+                TextEntry::make('source')->label('Origem')->badge()->color('gray')
+                    ->state(fn (Order $record) => $record->isOffline() ? 'Venda fora do site' : 'Site'),
+                TextEntry::make('internal_note')->label('Anotação interna')->placeholder('—')
+                    ->visible(fn (Order $record) => $record->isOffline()),
                 TextEntry::make('promotion.title')->label('Promoção')->columnSpanFull(),
                 TextEntry::make('total_cents')->label('Total')->formatStateUsing(fn (int $state) => Format::brl($state)),
                 TextEntry::make('quantity')->label('Quantidade'),
@@ -99,7 +103,7 @@ class OrderResource extends Resource
                     ->state(fn (Order $record) => $record->items()->orderBy('number')->pluck('number')
                         ->map(fn ($n) => $record->promotion->formatNumber((int) $n))->join(', ')),
             ]),
-            Section::make('Comprador')->components([
+            Section::make('Comprador')->hidden(fn (Order $record) => $record->isOffline())->components([
                 TextEntry::make('buyer_name')->label('Nome')->placeholder('Ainda não informado'),
                 TextEntry::make('buyer_email')->label('E-mail')->placeholder('—')->copyable(),
                 TextEntry::make('buyer_cpf')->label('CPF')->formatStateUsing(fn (?string $state) => self::maskCpf($state))->placeholder('—'),
@@ -107,7 +111,7 @@ class OrderResource extends Resource
                 TextEntry::make('user.email')->label('Conta no site')->placeholder('Compra como convidado'),
                 TextEntry::make('terms_accepted_at')->label('Aceite das regras')->dateTime('d/m/Y H:i')->placeholder('—'),
             ]),
-            Section::make('Pagamentos')->columnSpanFull()->components([
+            Section::make('Pagamentos')->columnSpanFull()->hidden(fn (Order $record) => $record->isOffline())->components([
                 RepeatableEntry::make('payments')->hiddenLabel()->placeholder('Nenhuma cobrança gerada.')->columns(4)->schema([
                     TextEntry::make('method')->label('Forma')->formatStateUsing(fn ($state) => $state->label()),
                     TextEntry::make('status')->label('Situação')->badge()->formatStateUsing(fn ($state) => $state->label()),
@@ -131,7 +135,7 @@ class OrderResource extends Resource
                 TextColumn::make('public_code')->label('Pedido')->searchable()->fontFamily('mono'),
                 TextColumn::make('promotion.title')->label('Promoção')->limit(30),
                 TextColumn::make('buyer_name')->label('Comprador')->searchable(['buyer_name', 'buyer_email'])
-                    ->description(fn (Order $record) => $record->buyer_email)->placeholder('—'),
+                    ->description(fn (Order $record) => $record->isOffline() ? $record->internal_note : $record->buyer_email)->placeholder('—'),
                 TextColumn::make('quantity')->label('Qtd.'),
                 TextColumn::make('total_cents')->label('Total')->formatStateUsing(fn (int $state) => Format::brl($state)),
                 TextColumn::make('status')->label('Situação')->badge()
@@ -143,6 +147,7 @@ class OrderResource extends Resource
                 SelectFilter::make('status')->label('Situação')
                     ->options(collect(OrderStatus::cases())->mapWithKeys(fn (OrderStatus $s) => [$s->value => $s->label()])->all()),
                 SelectFilter::make('promotion')->label('Promoção')->relationship('promotion', 'title')->searchable(),
+                SelectFilter::make('source')->label('Origem')->options(['site' => 'Site', Order::SOURCE_OFFLINE => 'Fora do site']),
             ])
             ->recordActions([ViewAction::make()]);
     }
