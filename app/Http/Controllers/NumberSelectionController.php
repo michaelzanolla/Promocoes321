@@ -65,7 +65,7 @@ class NumberSelectionController extends Controller
         ]);
 
         try {
-            ['order' => $order] = $reserveNumbers->reserve($promotion, $validated['numbers'], $validated['checkout_key'], $request->user());
+            ['order' => $order] = $reserveNumbers->reserve($promotion, $validated['numbers'], $validated['checkout_key'], $request->user(), $request->ip());
         } catch (NumbersUnavailable $e) {
             Cache::forget("promotion:{$promotion->id}:numbers");
 

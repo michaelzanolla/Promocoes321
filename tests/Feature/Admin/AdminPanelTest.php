@@ -60,6 +60,16 @@ class AdminPanelTest extends TestCase
         }
     }
 
+    public function test_admin_font_is_served_by_the_site(): void
+    {
+        $this->actingAs($this->admin)->get('/admin')->assertOk()
+            ->assertSee("--font-family: 'Inter Variable'", false)
+            ->assertSee(asset('fonts/filament/filament/inter/index.css'), false)
+            ->assertDontSee('fonts.bunny.net', false);
+        // O nome usado acima precisa ser o mesmo que o arquivo de fonte declara.
+        $this->assertStringContainsString('font-family:Inter Variable', (string) file_get_contents(public_path('fonts/filament/filament/inter/index.css')));
+    }
+
     public function test_create_promotion_converts_price_and_starts_as_draft(): void
     {
         $this->actingAs($this->admin);

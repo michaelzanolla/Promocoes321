@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Http\Middleware\EnsureUserIsActive;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,6 +35,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName(config('app.name').' · Painel')
             ->darkMode(false)
+            // Inter servida pelo próprio site (publicada pelo filament:upgrade no composer install), sem chamar o Bunny Fonts.
+            ->font('Inter Variable', url: asset('fonts/filament/filament/inter/index.css'), provider: LocalFontProvider::class)
             ->colors([
                 // Escala manual: a gerada a partir de um hex escuro sai saturada demais (ciano).
                 'primary' => [

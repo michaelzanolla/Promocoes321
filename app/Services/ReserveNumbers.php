@@ -27,6 +27,9 @@ class ReserveNumbers
     /** Teto de segurança, independente da configuração da promoção. */
     public const HARD_MAX_PER_ORDER = 1000;
 
+    /** Pedidos aguardando pagamento ao mesmo tempo por pessoa (conta ou, sem conta, IP) em cada promoção. */
+    public const MAX_OPEN_ORDERS = 3;
+
     public function __construct(private ExpireOrders $expireOrders) {}
 
     /**
@@ -36,7 +39,7 @@ class ReserveNumbers
      * @throws DomainException quando o pedido é inválido
      * @throws NumbersUnavailable quando algum número já foi reservado ou vendido
      */
-    public function reserve(Promotion $promotion, array $numbers, string $checkoutKey, ?User $user = null): array
+    public function reserve(Promotion $promotion, array $numbers, string $checkoutKey, ?User $user = null, ?string $ip = null): array
     {
         $numbers = $this->validate($promotion, $numbers);
 
@@ -44,10 +47,12 @@ class ReserveNumbers
             return $existing;
         }
 
+        $this->ensureOpenOrdersBelowLimit($promotion, $user, $ip);
+
         $token = Str::random(40);
 
         try {
-            $order = DB::transaction(function () use ($promotion, $numbers, $checkoutKey, $user, $token) {
+            $order = DB::transaction(function () use ($promotion, $numbers, $checkoutKey, $user, $ip, $token) {
                 // Trava compartilhada: várias reservas convivem, mas o administrador não muda o status no meio delas.
                 $locked = Promotion::whereKey($promotion->id)->sharedLock()->firstOrFail();
                 if ($locked->phase() !== PromotionPhase::Open) {
@@ -64,6 +69,7 @@ class ReserveNumbers
                     'checkout_key' => $checkoutKey,
                     'promotion_id' => $promotion->id,
                     'user_id' => $user?->id,
+                    'reserved_ip' => $ip,
                     'buyer_name' => $user?->name,
                     'buyer_email' => $user?->email,
                     'quantity' => count($numbers),
@@ -260,6 +266,29 @@ class ReserveNumbers
         }
 
         return $clean;
+    }
+
+    /**
+     * Impede uma mesma pessoa de segurar muitos números com vários pedidos abertos.
+     * ponytail: contado fora da transação; reservas simultâneas da mesma pessoa podem passar do limite
+     * por poucas, já contidas pelo limite de 10 reservas por minuto.
+     */
+    private function ensureOpenOrdersBelowLimit(Promotion $promotion, ?User $user, ?string $ip): void
+    {
+        if (! $user && ! $ip) {
+            return;
+        }
+
+        $open = Order::where('promotion_id', $promotion->id)
+            ->where('status', OrderStatus::AwaitingPayment)
+            ->where('reserved_until', '>', now())
+            ->when($user, fn ($q) => $q->where('user_id', $user->id), fn ($q) => $q->whereNull('user_id')->where('reserved_ip', $ip))
+            ->count();
+
+        if ($open >= self::MAX_OPEN_ORDERS) {
+            throw new DomainException('Você já tem '.self::MAX_OPEN_ORDERS.' pedidos aguardando pagamento nesta promoção. '
+                .'Pague ou desista de um deles antes de reservar outros números.');
+        }
     }
 
     /**

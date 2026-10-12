@@ -79,6 +79,49 @@ class ReserveNumbersTest extends TestCase
         $this->assertSame(1, Order::count());
     }
 
+    public function test_open_orders_per_person_are_limited(): void
+    {
+        $promotion = $this->promo();
+        $user = User::factory()->create();
+        $reserve = fn (int $n, ?User $u, string $ip, ?string $key = null) => $this->reserve->reserve($promotion, [$n], $key ?? (string) Str::uuid(), $u, $ip);
+
+        $first = $reserve(1, null, '10.0.0.1')['order'];
+        $reserve(2, null, '10.0.0.1');
+        $reserve(3, null, '10.0.0.1');
+        try {
+            $reserve(4, null, '10.0.0.1');
+            $this->fail('Deveria recusar o 4º pedido aberto do mesmo IP.');
+        } catch (DomainException $e) {
+            $this->assertStringContainsString('3 pedidos aguardando pagamento', $e->getMessage());
+        }
+
+        // Repetir um pedido já feito (clique duplo) continua devolvendo o mesmo pedido.
+        $this->assertSame($first->id, $reserve(1, null, '10.0.0.1', $first->checkout_key)['order']->id);
+        // Outro IP, outra promoção e quem está logado (mesmo no mesmo IP) têm o próprio limite.
+        $reserve(4, null, '10.0.0.2');
+        $this->reserve->reserve($this->promo(), [1], (string) Str::uuid(), null, '10.0.0.1');
+        foreach ([5, 6, 7] as $n) {
+            $reserve($n, $user, '10.0.0.1');
+        }
+        $this->expectException(DomainException::class);
+        $reserve(8, $user, '10.0.0.9');
+    }
+
+    public function test_paid_cancelled_or_expired_orders_do_not_count_toward_the_limit(): void
+    {
+        $promotion = $this->promo();
+        $orders = collect([1, 2, 3])->map(fn ($n) => $this->reserve->reserve($promotion, [$n], (string) Str::uuid(), null, '10.0.0.1')['order']);
+
+        $orders[0]->forceFill(['status' => OrderStatus::Confirmed])->save();
+        $orders[1]->forceFill(['status' => OrderStatus::Cancelled])->save();
+        $orders[2]->forceFill(['reserved_until' => now()->subMinute()])->save(); // vencido, ainda não limpo
+
+        foreach ([4, 5, 6] as $n) {
+            $this->reserve->reserve($promotion, [$n], (string) Str::uuid(), null, '10.0.0.1');
+        }
+        $this->assertSame(6, Order::where('reserved_ip', '10.0.0.1')->count());
+    }
+
     public function test_expired_reservation_numbers_can_be_taken_again(): void
     {
         $promotion = $this->promo();

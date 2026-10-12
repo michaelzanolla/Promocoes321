@@ -99,7 +99,8 @@ class OrderController extends Controller
             }
         }
 
-        return redirect()->route('orders.show', $order->public_code)->with('status', 'Pedido cancelado. Os números foram liberados.');
+        // Sem aviso extra: a página do pedido cancelado já diz que os números foram liberados.
+        return redirect()->route('orders.show', $order->public_code);
     }
 
     /**

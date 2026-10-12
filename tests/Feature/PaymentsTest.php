@@ -56,7 +56,6 @@ class PaymentsTest extends TestCase
             $path = Str::before($path, '?');
 
             return match (true) {
-                $request->method() === 'GET' && $path === '/customers' => Http::response(['data' => []]),
                 $request->method() === 'POST' && $path === '/customers' => Http::response(['id' => 'cus_1']),
                 $request->method() === 'POST' && $path === '/payments' => $this->createRemote($request->data()),
                 $request->method() === 'GET' && str_ends_with($path, '/pixQrCode') => Http::response(['payload' => '00020126PIXCOPIAECOLA', 'encodedImage' => base64_encode('png')]),
@@ -118,7 +117,10 @@ class PaymentsTest extends TestCase
         $this->assertSame('00020126PIXCOPIAECOLA', $payment->pix_payload);
         $this->assertSame(1500, $payment->amount_cents);
 
-        Http::assertSentCount(4); // busca cliente, cria cliente, cria cobrança, QR Code; o 2º clique não chama o Asaas
+        Http::assertSentCount(3); // cria cliente, cria cobrança, QR Code; o 2º clique não chama o Asaas
+        // Cliente sempre com os dados deste pedido: nunca o cadastro de quem já usou o mesmo CPF.
+        Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_ends_with($r->url(), '/customers')
+            && $r['name'] === 'Maria da Silva' && $r['email'] === 'maria@example.com' && $r['cpfCnpj'] === '52998224725');
         Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_ends_with($r->url(), '/payments')
             && $r['value'] == 15.0 && $r['externalReference'] === $order->public_code && $r['billingType'] === 'PIX'
             && $r->hasHeader('access_token', 'chave-de-teste'));

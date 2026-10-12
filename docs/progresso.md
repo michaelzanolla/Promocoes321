@@ -14,7 +14,7 @@ Atualizado em 2026-10-11. Para retomar, leia este arquivo, o [README](../README.
 ### Roteiro ao retomar
 
 1. Testar o acesso: `ssh promocoes`, depois `php -v` (precisa ser 8.3; se não, usar o caminho completo, ex.: `/opt/cpanel/ea-php83/root/usr/bin/php`) e `which mysqldump`.
-2. No cPanel: apontar a raiz do subdomínio `promocoes.osrv.com.br` para `promocoes/public`; rodar o AutoSSL; PHP 8.3 e limites de upload (feito; os arquivos gerados pelo cPanel estão em `public/` para o deploy não apagá-los); criar banco e usuário MySQL exclusivos; criar `nao-responda@osrv.com.br` no **Titan** (o e-mail do domínio está lá; SPF e DKIM já ok), criar o DMARC no Editor de zona e testar no Gmail.
+2. ~~No cPanel~~ **Feito em 2026-10-12**: subdomínio com HTTPS válido (responde 403 até o primeiro deploy, porque a pasta está vazia); PHP 8.3 e limites de upload (os arquivos gerados pelo cPanel estão em `public/` para o deploy não apagá-los); banco e usuário MySQL `jonesa50_promocoes`; `nao-responda@osrv.com.br` no **Titan** com SPF, DKIM e DMARC dando PASS no Gmail.
 3. Criar `~/promocoes-shared/.env` a partir de `deploy/env.production.example` (Asaas em **sandbox**), com permissão 600, e guardar a `APP_KEY` fora da HostGator.
 4. Primeiro deploy: `bash deploy/deploy.sh promocoes`; depois `php artisan app:create-admin` no servidor.
 5. Cron (schedule:run a cada minuto e backup diário), webhook do Asaas e um teste completo no sandbox. Tudo está no README, seção Produção.
@@ -92,28 +92,29 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 ### Segurança do login (validar no final, antes de publicar)
 
 - [ ] Decidir os reforços contra ataque de senha distribuído (muitos IPs, poucas tentativas cada), que hoje passa pelos limites por IP. Opções: (1) limite por conta vindo de qualquer IP, ex.: 20 tentativas erradas por hora por e-mail (efeito colateral: atacante pode travar o login de uma conta por até 1 h); (2) dois fatores obrigatório para administradores; (3) CAPTCHA Cloudflare Turnstile (serviço externo, conta na Cloudflare). Recomendado: 1 e 2. Antes de decidir, olhar na Auditoria se há "Login recusado" ou "Login bloqueado" em volume.
-- [ ] Envio do e-mail de "Esqueci minha senha" depois de responder à página (hoje o tempo de resposta ainda diferencia e-mail cadastrado de não cadastrado).
+- [x] "Esqueci minha senha": busca da conta, token e envio acontecem depois da resposta (`app/Http/Controllers/PasswordResetLinkController.php`); o tempo de resposta não revela mais se o e-mail tem conta.
 
 ### Identidade e conteúdo
 
 - [ ] Nome e marca definitivos: "Promoções 321" e o logotipo de bilhete são provisórios (`APP_NAME`, `resources/views/components/app-logo-icon.blade.php`).
-- [ ] Os e-mails usam o visual padrão do Laravel, sem a identidade da plataforma.
+- [x] E-mails com as cores do site: faixa amarela, quadro do pedido e botão amarelos (`resources/views/vendor/mail/html/themes/default.css`). Logotipo em imagem fica para quando a marca for definitiva.
 
 ### Fase 4 — Painel
 
-- [ ] O painel (Filament) carrega a fonte padrão dele de um serviço externo (Bunny Fonts). O site público não faz isso. Dá para trocar por fonte local, se quiser zero chamadas externas.
+- [x] O painel usa a fonte Inter servida pelo próprio site (antes vinha do Bunny Fonts).
 
 ### Fase 5 — Reserva e checkout
 
 - [ ] `composer test` falha no `ConcurrencyTest` **só neste ambiente** (limite de ~34 processos por comando). Rodar `php artisan test` separado do Pint/PHPStan. Na máquina do usuário deve funcionar.
 - [x] Grade de números: navegação por setas do teclado (feito na Fase 8).
-- [ ] Não há limite de pedidos abertos por pessoa: alguém poderia tentar segurar muitos números. Há limite por pedido e de 10 reservas por minuto.
+- [x] No máximo 3 pedidos aguardando pagamento por pessoa em cada promoção (pela conta ou, sem conta, pelo IP; `ReserveNumbers::MAX_OPEN_ORDERS`). Quem compartilha IP (Wi-Fi, operadora móvel) divide esse limite; se reclamarem, aumentar o número.
 - [ ] Não dá para trocar a forma de pagamento depois de confirmar os dados (é preciso desistir do pedido e reservar de novo).
 
 ### Fase 6 — Pagamentos
 
 - [ ] **Webhook do Asaas não cadastrado**: precisa da URL pública (Fase 8). `ASAAS_WEBHOOK_TOKEN` está vazio no `.env` local. Com o token vazio, o sistema recusa todos os avisos, que é o comportamento seguro.
-- [ ] **Reembolso e cartão** só testados com o Asaas simulado; testar no sandbox real (cartão de teste do Asaas na fatura).
+- [x] **Reembolso e cartão** no sandbox real (2026-10-12): cobrança de cartão paga na fatura do Asaas (cartão 4444 4444 4444 4444, CVV 123; a fatura exige reCAPTCHA), confirmada pela conciliação com comprovante e e-mail, depois reembolsada (pedido "reembolsado", comprovante público "não é mais válido"). Cancelamento de cobrança pela conciliação também conferido. O botão Reembolsar do painel chama o mesmo serviço e está coberto pelos testes.
+- [x] Cliente do Asaas: era reaproveitado pelo CPF e a fatura mostrava nome e e-mail de quem já tinha comprado com aquele CPF. Agora cada cobrança cria um cliente com os dados do pedido.
 - [ ] O cancelamento da cobrança Pix no Asaas, quando a reserva expira sozinha, acontece pela conciliação (até ~1 minuto depois). Pagamento nesse intervalo cai no fluxo de pagamento tardio, que está tratado.
 
 ### Fase 7 — Comprovantes e e-mails

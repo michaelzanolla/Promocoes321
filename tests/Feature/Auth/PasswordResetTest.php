@@ -4,7 +4,9 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Defer\DeferredCallbackCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
@@ -94,6 +96,23 @@ class PasswordResetTest extends TestCase
             $response->assertSessionHasNoErrors()->assertSessionHas('status', __('passwords.sent'));
         }
         Notification::assertSentTimes(ResetPassword::class, 1);
+    }
+
+    public function test_reset_link_work_only_happens_after_the_response(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        // Sem o middleware que roda o defer() ao fim da requisição: dá para ver o que já aconteceu ao responder.
+        $this->withoutMiddleware(InvokeDeferredCallbacks::class);
+
+        $this->post(route('password.request'), ['email' => $user->email])->assertSessionHas('status', __('passwords.sent'));
+
+        Notification::assertNothingSent();
+        $this->assertDatabaseCount('password_reset_tokens', 0);
+
+        app(DeferredCallbackCollection::class)->invoke();
+
+        Notification::assertSentTo($user, ResetPassword::class);
     }
 
     public function test_resetting_the_password_ends_sessions_on_other_devices(): void

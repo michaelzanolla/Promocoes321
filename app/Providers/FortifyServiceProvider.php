@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Controllers\PasswordResetLinkController;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Auth\Events\Failed;
@@ -13,15 +14,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Events\TwoFactorAuthenticationFailed;
 use Laravel\Fortify\Fortify;
-use Laravel\Fortify\Http\Responses\SuccessfulPasswordResetLinkRequestResponse;
+use Laravel\Fortify\Http\Controllers\PasswordResetLinkController as FortifyPasswordResetLinkController;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -30,9 +29,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // "Esqueci minha senha": e-mail sem conta ou pedido repetido recebem a mesma resposta de sucesso,
-        // para a tela não revelar quais e-mails estão cadastrados.
-        $this->app->bind(FailedPasswordResetLinkRequestResponse::class, fn () => new SuccessfulPasswordResetLinkRequestResponse(Password::RESET_LINK_SENT));
+        // "Esqueci minha senha": mesma resposta para qualquer e-mail, e o trabalho só depois de responder.
+        $this->app->bind(FortifyPasswordResetLinkController::class, PasswordResetLinkController::class);
     }
 
     /**

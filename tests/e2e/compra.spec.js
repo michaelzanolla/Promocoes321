@@ -28,7 +28,7 @@ test('escolher números, reservar, confirmar os dados e desistir', async ({ page
 
     await page.getByText('Desistir deste pedido').click();
     await page.getByRole('button', { name: 'Cancelar pedido e liberar números' }).click();
-    await expect(page.getByRole('status')).toHaveText('Pedido cancelado. Os números foram liberados.');
+    await expect(page.getByText('Pedido cancelado. Os números foram liberados.')).toHaveCount(1);
 });
 
 test('erros do formulário aparecem em português e marcam o campo', async ({ page }) => {

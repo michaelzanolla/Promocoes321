@@ -71,16 +71,11 @@ class AsaasGateway implements PaymentGateway
     }
 
     /**
-     * Reaproveita o cliente do Asaas com o mesmo CPF, ou cria um novo.
+     * Um cliente novo no Asaas por cobrança, com os dados deste pedido. Não reaproveita por CPF:
+     * a fatura do Asaas mostra nome, e-mail e CPF do cliente, e qualquer um pode digitar o CPF de outra pessoa.
      */
     private function customerId(Order $order): string
     {
-        $found = $this->call(fn () => $this->http()->get('/customers', ['cpfCnpj' => $order->buyer_cpf, 'limit' => 1]));
-
-        if (! empty($found['data'][0]['id'])) {
-            return $found['data'][0]['id'];
-        }
-
         $created = $this->call(fn () => $this->http()->post('/customers', [
             'name' => $order->buyer_name,
             'cpfCnpj' => $order->buyer_cpf,
