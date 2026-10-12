@@ -225,7 +225,26 @@ user=USUARIO_DO_BANCO
 password="SENHA_DO_BANCO"
 ```
 
-Uma vez por mês, baixe um backup para fora da HostGator (PC ou nuvem) e teste restaurar em um banco local.
+Uma vez por mês, baixe um backup para fora da HostGator (PC ou nuvem) e teste restaurar em um banco local. No PC, com o Docker aberto (Git Bash, na raiz do projeto):
+
+```bash
+docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS promocoes_restore; CREATE DATABASE promocoes_restore; GRANT ALL ON promocoes_restore.* TO \`$MYSQL_USER\`@\`%\`"'
+gunzip -c promocoes-AAAA-MM-DD.sql.gz | docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" promocoes_restore'
+# Confere se a APP_KEY guardada abre os CPFs (cole a chave quando pedir; ela não aparece na tela nem no histórico):
+read -rs APP_KEY && export APP_KEY && DB_DATABASE=promocoes_restore php artisan tinker --execute="\$c = App\Models\Order::where('source', 'site')->get()->pluck('buyer_cpf')->filter(); echo \$c->count().' CPFs: '.(\$c->every(fn (\$v) => preg_match('/^\d{11}\$/', \$v)) ? 'ok' : 'FALHOU');"
+```
+
+Ensaiado em 2026-10-12 com o próprio `backup.sh` no MySQL do Docker: contagens de todas as tabelas iguais e CPFs decifrados iguais aos do banco original.
+
+**Restaurar no servidor** (só em caso de perda de dados; substitui as tabelas pelas do backup):
+
+```bash
+cd ~/promocoes && php artisan down
+gunzip -c ~/promocoes-shared/backups/NOME_DO_BANCO-AAAA-MM-DD.sql.gz | mysql --defaults-extra-file=$HOME/promocoes-shared/backup.cnf NOME_DO_BANCO
+php artisan up
+```
+
+Pedidos feitos depois do backup se perdem. Confira no painel do Asaas as cobranças recebidas desde a data do backup e trate cada uma manualmente.
 
 **Guarde a `APP_KEY` do servidor fora da HostGator** (gerenciador de senhas): o CPF dos compradores fica criptografado com ela. Sem ela, o backup do banco não recupera os CPFs. Nunca troque a `APP_KEY` de um sistema em uso.
 
@@ -244,6 +263,6 @@ Antes de trocar `ASAAS_ENV` para `production`:
 - [ ] WordPress do mesmo cPanel atualizado, sem plugins e temas sem uso.
 - [ ] Chave de API do Asaas restrita, se o Asaas permitir (sem transferências/saques via API ou por IP).
 - [ ] Execução completa no sandbox dentro da HostGator: reserva, Pix, cartão, webhook, e-mail recebido, comprovante, reembolso e expiração de reserva.
-- [ ] Backup diário rodando e um restore testado.
+- [ ] Backup diário rodando no servidor (restauração já ensaiada no PC em 2026-10-12: seção Cron e backup).
 - [ ] `APP_DEBUG=false` (uma página de erro não pode mostrar detalhes técnicos).
 - [ ] Segurança do login decidida (reforços contra ataque de senha distribuído: ver `docs/progresso.md`, "Segurança do login").

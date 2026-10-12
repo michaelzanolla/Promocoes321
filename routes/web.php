@@ -29,6 +29,7 @@ Route::get('pedido/{code}', [OrderController::class, 'show'])->middleware('throt
 Route::put('pedido/{code}/dados', [OrderController::class, 'identify'])->middleware('throttle:orders')->name('orders.identify');
 Route::post('pedido/{code}/cancelar', [OrderController::class, 'cancel'])->middleware('throttle:orders')->name('orders.cancel');
 Route::post('pedido/{code}/pagamento', [OrderController::class, 'pay'])->middleware('throttle:orders')->name('orders.pay');
+Route::patch('pedido/{code}/forma-de-pagamento', [OrderController::class, 'changeMethod'])->middleware('throttle:orders')->name('orders.method');
 Route::get('pedido/{code}/situacao', [OrderController::class, 'status'])->middleware('throttle:order-status')->name('orders.status');
 
 // Comprovante: verificação pública (sem dados pessoais) e versão do comprador (página e PDF).

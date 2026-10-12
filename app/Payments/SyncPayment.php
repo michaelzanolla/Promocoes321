@@ -69,8 +69,8 @@ class SyncPayment
             ])->save();
 
             match ($new) {
-                PaymentStatus::Confirmed => $this->confirm($order, $charge),
-                PaymentStatus::Refunded => $this->refund($order),
+                PaymentStatus::Confirmed => $this->confirm($order, $payment, $charge),
+                PaymentStatus::Refunded => $this->refund($order, $payment),
                 PaymentStatus::Disputed => $this->review($order, 'O comprador abriu uma contestação do pagamento no cartão.'),
                 PaymentStatus::Pending => null,
                 // Recusado ou cancelado: o pedido em análise de risco volta a aguardar; o prazo da reserva segue valendo.
@@ -96,7 +96,7 @@ class SyncPayment
         };
     }
 
-    private function confirm(Order $order, Charge $charge): void
+    private function confirm(Order $order, Payment $payment, Charge $charge): void
     {
         if ($charge->amountCents !== $order->total_cents) {
             $this->review($order, 'O valor pago é diferente do total do pedido.');
@@ -105,6 +105,11 @@ class SyncPayment
         }
 
         if ($order->status === OrderStatus::Confirmed) {
+            // Outra cobrança já pagou o pedido (ex.: gerou Pix, trocou para cartão e pagou os dois).
+            if ($this->otherConfirmedPayment($order, $payment)) {
+                $this->review($order, 'Pagamento em duplicidade: o pedido já estava pago por outra cobrança. Reembolse uma delas.');
+            }
+
             return;
         }
 
@@ -151,11 +156,23 @@ class SyncPayment
     }
 
     /** Números de pedido reembolsado continuam presos: não voltam à venda sozinhos. */
-    private function refund(Order $order): void
+    private function refund(Order $order, Payment $payment): void
     {
+        // Reembolso da cobrança duplicada: a outra continua paga, então o pedido segue confirmado.
+        if ($order->status === OrderStatus::NeedsReview && $order->receipt_code && $this->otherConfirmedPayment($order, $payment)) {
+            $order->forceFill(['status' => OrderStatus::Confirmed, 'review_reason' => null])->save();
+
+            return;
+        }
+
         if (in_array($order->status, [OrderStatus::Confirmed, OrderStatus::NeedsReview], true)) {
             $order->forceFill(['status' => OrderStatus::Refunded, 'refunded_at' => now()])->save();
         }
+    }
+
+    private function otherConfirmedPayment(Order $order, Payment $payment): bool
+    {
+        return $order->payments()->whereKeyNot($payment->id)->where('status', PaymentStatus::Confirmed)->exists();
     }
 
     private function review(Order $order, string $reason): void

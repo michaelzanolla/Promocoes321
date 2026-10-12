@@ -108,14 +108,16 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 - [ ] `composer test` falha no `ConcurrencyTest` **só neste ambiente** (limite de ~34 processos por comando). Rodar `php artisan test` separado do Pint/PHPStan. Na máquina do usuário deve funcionar.
 - [x] Grade de números: navegação por setas do teclado (feito na Fase 8).
 - [x] No máximo 3 pedidos aguardando pagamento por pessoa em cada promoção (pela conta ou, sem conta, pelo IP; `ReserveNumbers::MAX_OPEN_ORDERS`). Quem compartilha IP (Wi-Fi, operadora móvel) divide esse limite; se reclamarem, aumentar o número.
-- [ ] Não dá para trocar a forma de pagamento depois de confirmar os dados (é preciso desistir do pedido e reservar de novo).
+- [x] Troca de forma de pagamento (Pix ↔ cartão) na página do pedido, só com a promoção aberta. A cobrança em aberto é cancelada no Asaas antes da troca; se o cancelamento falhar, nada muda. Conferido no sandbox real em 2026-10-12.
+- [x] Pagamento em duplicidade (duas cobranças pagas no mesmo pedido) deixa o pedido "em verificação"; reembolsar uma delas devolve o pedido para "confirmado". Antes, o segundo pagamento era ignorado em silêncio.
 
 ### Fase 6 — Pagamentos
 
 - [ ] **Webhook do Asaas não cadastrado**: precisa da URL pública (Fase 8). `ASAAS_WEBHOOK_TOKEN` está vazio no `.env` local. Com o token vazio, o sistema recusa todos os avisos, que é o comportamento seguro.
 - [x] **Reembolso e cartão** no sandbox real (2026-10-12): cobrança de cartão paga na fatura do Asaas (cartão 4444 4444 4444 4444, CVV 123; a fatura exige reCAPTCHA), confirmada pela conciliação com comprovante e e-mail, depois reembolsada (pedido "reembolsado", comprovante público "não é mais válido"). Cancelamento de cobrança pela conciliação também conferido. O botão Reembolsar do painel chama o mesmo serviço e está coberto pelos testes.
 - [x] Cliente do Asaas: era reaproveitado pelo CPF e a fatura mostrava nome e e-mail de quem já tinha comprado com aquele CPF. Agora cada cobrança cria um cliente com os dados do pedido.
-- [ ] O cancelamento da cobrança Pix no Asaas, quando a reserva expira sozinha, acontece pela conciliação (até ~1 minuto depois). Pagamento nesse intervalo cai no fluxo de pagamento tardio, que está tratado.
+- [x] O cancelamento da cobrança Pix no Asaas, quando a reserva expira sozinha, acontece pela conciliação (até ~1 minuto depois); conferido no sandbox real em 2026-10-12. Pagamento nesse intervalo cai no fluxo de pagamento tardio, que está tratado.
+- [ ] **Pix pago no sandbox real**: fica para o teste completo na HostGator (o sandbox só confirma Pix pelo botão do painel; recuperar a senha da conta sandbox.asaas.com antes).
 
 ### Fase 7 — Comprovantes e e-mails
 

@@ -405,6 +405,80 @@ class PaymentsTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'order.refund_requested', 'subject_id' => $order->id]);
     }
 
+    public function test_buyer_can_switch_payment_method_and_the_open_charge_is_cancelled_first(): void
+    {
+        $order = $this->identifiedOrder([18]);
+        $pix = app(StartPayment::class)($order);
+        $this->get(route('orders.show', $order->public_code))->assertSee('Trocar para Cartão de crédito')->assertSee('a cobrança já gerada é cancelada');
+
+        $this->patch(route('orders.method', $order->public_code), ['payment_method' => 'credit_card'])
+            ->assertSessionHasNoErrors()->assertSessionHas('status', 'Forma de pagamento alterada: Cartão de crédito.');
+
+        Http::assertSent(fn (Request $r) => $r->method() === 'DELETE' && str_ends_with($r->url(), '/payments/'.$pix->provider_payment_id));
+        $this->assertSame(PaymentStatus::Cancelled, $pix->fresh()->status);
+        $this->assertSame(PaymentMethod::CreditCard, $order->fresh()->payment_method);
+
+        $this->post(route('orders.pay', $order->public_code))->assertRedirect();
+        $this->assertSame(PaymentMethod::CreditCard, $order->payments()->latest('id')->first()->method);
+        // A troca não passa pelo formulário de dados (que não cancelaria a cobrança).
+        $this->put(route('orders.identify', $order->public_code), [
+            'buyer_name' => 'Maria da Silva', 'buyer_email' => 'maria@example.com', 'buyer_cpf' => '529.982.247-25',
+            'payment_method' => 'pix', 'accept_terms' => '1',
+        ])->assertSessionHasErrors('order');
+        $this->assertSame(PaymentMethod::CreditCard, $order->fresh()->payment_method);
+    }
+
+    public function test_switching_payment_method_changes_nothing_if_the_old_charge_can_not_be_cancelled(): void
+    {
+        $order = $this->identifiedOrder([19]);
+        $pix = app(StartPayment::class)($order);
+        $this->providerDown = true;
+
+        $this->patch(route('orders.method', $order->public_code), ['payment_method' => 'credit_card'])->assertSessionHasErrors('order');
+
+        $this->assertSame(PaymentStatus::Pending, $pix->fresh()->status);
+        $this->assertSame(PaymentMethod::Pix, $order->fresh()->payment_method);
+    }
+
+    public function test_switching_payment_method_is_blocked_while_the_promotion_is_paused(): void
+    {
+        $order = $this->identifiedOrder([20]);
+        $pix = app(StartPayment::class)($order);
+        app(PromotionLifecycle::class)->pause($this->promotion);
+
+        $this->get(route('orders.show', $order->public_code))->assertDontSee('Trocar para');
+        $this->patch(route('orders.method', $order->public_code), ['payment_method' => 'credit_card'])->assertSessionHasErrors('order');
+
+        // O Pix já gerado continua valendo.
+        $this->assertSame(PaymentStatus::Pending, $pix->fresh()->status);
+        Http::assertNotSent(fn (Request $r) => $r->method() === 'DELETE');
+    }
+
+    public function test_duplicate_payment_goes_to_review_and_refunding_the_extra_charge_keeps_the_order_paid(): void
+    {
+        $order = $this->identifiedOrder([21]);
+        $pix = app(StartPayment::class)($order);
+        $order->forceFill(['payment_method' => PaymentMethod::CreditCard])->save();
+        $card = app(StartPayment::class)($order->fresh());
+
+        $this->setRemote($card->provider_payment_id, ['status' => 'CONFIRMED']);
+        $this->webhook('evt_1', 'PAYMENT_CONFIRMED', $card->provider_payment_id);
+        $this->assertSame(OrderStatus::Confirmed, $order->fresh()->status);
+
+        $this->setRemote($pix->provider_payment_id, ['status' => 'RECEIVED']);
+        $this->webhook('evt_2', 'PAYMENT_RECEIVED', $pix->provider_payment_id);
+        $this->assertSame(OrderStatus::NeedsReview, $order->fresh()->status);
+        $this->assertStringContainsString('duplicidade', $order->fresh()->review_reason);
+
+        $this->actingAs(User::factory()->admin()->create());
+        app(RefundOrder::class)($order->fresh()); // reembolsa a cobrança confirmada mais recente: a do cartão
+
+        $this->assertSame(PaymentStatus::Refunded, $card->fresh()->status);
+        $this->assertSame(PaymentStatus::Confirmed, $pix->fresh()->status);
+        $this->assertSame(OrderStatus::Confirmed, $order->fresh()->status);
+        $this->assertNotNull($order->fresh()->receipt_code);
+    }
+
     public function test_cancelling_an_order_cancels_the_open_charge(): void
     {
         $order = $this->identifiedOrder([17]);

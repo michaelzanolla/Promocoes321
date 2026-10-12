@@ -244,6 +244,20 @@
                     </a>
                     <p class="mt-4 text-sm text-tinta-suave" role="status">Depois de pagar, volte para esta página: a confirmação aparece aqui automaticamente.</p>
                 @endif
+
+                @if ($order->status === OrderStatus::AwaitingPayment && $promotion->phase() === \App\Enums\PromotionPhase::Open)
+                    @foreach ($methods->reject(fn ($m) => $m === $order->payment_method) as $other)
+                        <form method="POST" action="{{ route('orders.method', $order->public_code) }}" class="mt-6 border-t pt-4 text-sm">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="payment_method" value="{{ $other->value }}">
+                            @if ($payment && $payment->status === \App\Enums\PaymentStatus::Pending)
+                                <p class="text-tinta-suave">Ao trocar, a cobrança já gerada é cancelada.</p>
+                            @endif
+                            <button type="submit" class="btn btn-secondary mt-2">Trocar para {{ $other->label() }}</button>
+                        </form>
+                    @endforeach
+                @endif
             </section>
         @endif
 

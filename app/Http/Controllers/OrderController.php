@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\PromotionPhase;
 use App\Mail\OrderMail;
 use App\Models\Order;
 use App\Payments\PaymentGateway;
@@ -16,6 +17,7 @@ use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -45,6 +47,10 @@ class OrderController extends Controller
 
         if (! $order->isPayable()) {
             return back()->withErrors(['order' => 'Este pedido não aceita mais alterações.']);
+        }
+        // Com cobrança em aberto, a forma de pagamento só muda por changeMethod(), que cancela a cobrança antes.
+        if ($order->payments()->where('status', PaymentStatus::Pending)->exists()) {
+            return back()->withErrors(['order' => 'Os dados não podem ser alterados depois de gerar o pagamento.']);
         }
 
         $data = $request->validate([
@@ -101,6 +107,52 @@ class OrderController extends Controller
 
         // Sem aviso extra: a página do pedido cancelado já diz que os números foram liberados.
         return redirect()->route('orders.show', $order->public_code);
+    }
+
+    /**
+     * Troca Pix ↔ cartão depois de confirmar os dados. A cobrança em aberto da forma anterior é
+     * cancelada no provedor antes da troca, para não poder ser paga junto com a nova; se o
+     * cancelamento falhar, nada muda.
+     */
+    public function changeMethod(Request $request, string $code, PaymentGateway $gateway): RedirectResponse
+    {
+        $order = Order::where('public_code', $code)->with('promotion')->firstOrFail();
+        $this->authorizeAccess($request, $order);
+
+        $data = $request->validate(
+            ['payment_method' => ['required', Rule::in($order->promotion->payment_methods)]],
+            ['payment_method.in' => 'Esta forma de pagamento não está disponível para esta promoção.'],
+        );
+        $method = PaymentMethod::from($data['payment_method']);
+
+        try {
+            DB::transaction(function () use ($order, $method, $gateway) {
+                // Mesma trava da geração da cobrança: troca e "gerar pagamento" não se cruzam.
+                $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if (! $order->isPayable() || ! $order->isIdentified()) {
+                    throw new DomainException('Este pedido não aceita mais alterações.');
+                }
+                // Pausada ou encerrada não gera cobrança nova: trocar só cancelaria um Pix ainda válido.
+                if ($order->promotion->phase() !== PromotionPhase::Open) {
+                    throw new DomainException('Esta promoção não aceita novos pagamentos no momento, então a forma de pagamento não pode ser trocada.');
+                }
+
+                foreach ($order->payments()->where('status', PaymentStatus::Pending)->get() as $payment) {
+                    $gateway->cancelCharge($payment->provider_payment_id);
+                    $payment->forceFill(['status' => PaymentStatus::Cancelled])->save();
+                }
+
+                $order->forceFill(['payment_method' => $method])->save();
+            });
+        } catch (DomainException $e) {
+            return back()->withErrors(['order' => $e->getMessage()]);
+        } catch (PaymentGatewayException $e) {
+            report($e);
+
+            return back()->withErrors(['order' => 'Não conseguimos cancelar a cobrança anterior agora. Nada foi alterado; tente de novo em instantes.']);
+        }
+
+        return redirect()->route('orders.show', $order->public_code)->with('status', 'Forma de pagamento alterada: '.$method->label().'.');
     }
 
     /**
