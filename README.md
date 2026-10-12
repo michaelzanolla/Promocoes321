@@ -174,9 +174,9 @@ A porta costuma ser 2222 na HostGator; confira no cPanel. Teste com `ssh promoco
 ### 2. Banco, e-mail e subdomínio (cPanel, uma vez)
 
 - **Banco**: Bancos de dados MySQL > crie um banco e um usuário exclusivos e dê ao usuário todos os privilégios só nesse banco.
-- **E-mail**: Contas de e-mail > crie `nao-responda@SEU-DOMINIO`. Em Entregabilidade de e-mail, confira se SPF e DKIM estão válidos.
+- **E-mail**: o e-mail do domínio está no Titan (MX `mx1.titan.email`), não no cPanel. Crie a caixa `nao-responda@SEU-DOMINIO` no Titan (Portal do Cliente HostGator > E-mails) e não crie conta com o mesmo domínio em cPanel > Contas de e-mail (o servidor passaria a entregar localmente os e-mails desse domínio). SPF (`include:spf.titan.email`) e DKIM (`titan1._domainkey`) já estão no DNS; em cPanel > Editor de zona, crie o TXT `_dmarc` com `v=DMARC1; p=none;`. Teste: envie do webmail do Titan para um Gmail e, em "Mostrar original", confira SPF, DKIM e DMARC como PASS.
 - **Subdomínio**: Domínios > criar, com raiz do documento `promocoes/public` (sem `public_html`). Em seguida, SSL/TLS Status > rodar o AutoSSL para o subdomínio. O `.htaccess` já redireciona tudo para HTTPS.
-- No MultiPHP Manager, deixe o subdomínio em PHP 8.3. No MultiPHP INI Editor, use `upload_max_filesize = 8M` e `post_max_size = 10M` (imagens das promoções e comprovação do sorteio, até 5 MB).
+- No MultiPHP Manager, deixe o subdomínio em PHP 8.3. Os ajustes do PHP (`upload_max_filesize = 8M`, `post_max_size = 10M` etc., para imagens e comprovação do sorteio de até 5 MB) já vão com o código em `public/.htaccess`, `public/.user.ini` e `public/php.ini`, porque o deploy troca a pasta inteira e apagaria o que o MultiPHP INI Editor grava lá. Para mudar algum valor, edite os três arquivos no repositório, não no cPanel.
 
 ### 3. `.env` do servidor (uma vez)
 

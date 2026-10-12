@@ -14,7 +14,7 @@ Atualizado em 2026-10-11. Para retomar, leia este arquivo, o [README](../README.
 ### Roteiro ao retomar
 
 1. Testar o acesso: `ssh promocoes`, depois `php -v` (precisa ser 8.3; se não, usar o caminho completo, ex.: `/opt/cpanel/ea-php83/root/usr/bin/php`) e `which mysqldump`.
-2. No cPanel: apontar a raiz do subdomínio `promocoes.osrv.com.br` para `promocoes/public`; rodar o AutoSSL; PHP 8.3 no MultiPHP Manager; `upload_max_filesize = 8M` e `post_max_size = 10M` no MultiPHP INI Editor; criar banco e usuário MySQL exclusivos; criar o e-mail `nao-responda@` e conferir SPF/DKIM.
+2. No cPanel: apontar a raiz do subdomínio `promocoes.osrv.com.br` para `promocoes/public`; rodar o AutoSSL; PHP 8.3 e limites de upload (feito; os arquivos gerados pelo cPanel estão em `public/` para o deploy não apagá-los); criar banco e usuário MySQL exclusivos; criar `nao-responda@osrv.com.br` no **Titan** (o e-mail do domínio está lá; SPF e DKIM já ok), criar o DMARC no Editor de zona e testar no Gmail.
 3. Criar `~/promocoes-shared/.env` a partir de `deploy/env.production.example` (Asaas em **sandbox**), com permissão 600, e guardar a `APP_KEY` fora da HostGator.
 4. Primeiro deploy: `bash deploy/deploy.sh promocoes`; depois `php artisan app:create-admin` no servidor.
 5. Cron (schedule:run a cada minuto e backup diário), webhook do Asaas e um teste completo no sandbox. Tudo está no README, seção Produção.
