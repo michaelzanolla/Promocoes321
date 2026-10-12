@@ -1,13 +1,13 @@
 # Progresso do projeto
 
-Atualizado em 2026-10-11. Para retomar, leia este arquivo, o [README](../README.md) e o [plano da Fase 1](fase-1-planejamento.md).
+Atualizado em 2026-10-12. Para retomar, leia este arquivo, o [README](../README.md) e o [plano da Fase 1](fase-1-planejamento.md).
 
-## Onde paramos (pausa em 2026-10-11)
+## Onde paramos (2026-10-12)
 
 **Esperando a HostGator** responder ao chamado que pede a ativação do acesso SSH (shell). Todo o código está commitado; nada pendente na pasta.
 
-- **Branch atual:** `fase-8-numeracao` (último commit `5820197`). As branches são empilhadas: fase-7 → fase-8-producao → fase-8-exemplos-status → fase-8-numeracao. A `main` continua sem commits. A `fase-8-reset-senha` ficou vazia e pode ser apagada.
-- **Testes ao pausar:** 174 PHP + 4 Playwright passando; Pint e PHPStan limpos.
+- **Branches:** todo o projeto está na `main` (último commit `41d1404`). As branches de cada fase eram empilhadas e viraram a `main` em 2026-10-12, sem merge; depois foram apagadas (os commits de cada fase estão na tabela "Situação das fases"). Cada alteração nova começa numa branch a partir da `main`.
+- **Testes:** 182 PHP + 4 Playwright passando; Pint e PHPStan limpos.
 - **Chamado na HostGator:** aberto em Plano M (cerv.org.br), pedindo ativar o SSH e confirmar porta 2222, o PHP 8.3 da linha de comando e o `mysqldump`. A resposta chega no e-mail do usuário.
 - **Acesso já preparado no PC:** chave `~/.ssh/hostgator` (cadastrada e autorizada no cPanel) e `~/.ssh/config` com o Host `promocoes` (promocoes.osrv.com.br, usuário jonesa50, porta 2222). A autenticação por chave já funcionou; falta só a HostGator ligar o shell.
 
@@ -26,7 +26,7 @@ Docker Desktop aberto, `docker compose up -d` e `php artisan serve` (http://loca
 
 ## Histórico da Fase 8
 
-Feito na Fase 8 até agora (commitado na branch `fase-8-producao`):
+Primeira parte da Fase 8 (commit `52af1a6`):
 
 - PDF do comprovante conferido; ajustado o espaçamento de "Números confirmados".
 - `deploy/deploy.sh` (deploy por SSH a partir do PC, sem Node/Composer no servidor; testada a montagem do pacote), `deploy/backup.sh` (mysqldump diário, 7 dias) e `deploy/env.production.example`.
@@ -38,7 +38,7 @@ Feito na Fase 8 até agora (commitado na branch `fase-8-producao`):
 - Dependências npm: `overrides` força `tinypool` 2.1.2 (vulnerabilidade crítica no 2.1.0, usado pelo `vite-plus` 0.3.0). A 0.3.3 do `vite-plus` exige migrar o Vite para o núcleo dele (`vp migrate`); ao fazer isso, remover o `overrides`. `npm audit`: 0.
 - Testes ponta a ponta com Playwright (`npm run test:e2e`, 4 testes): compra até os dados confirmados e desistência, erros do formulário, disputa do mesmo número e teclado na grade. Acharam um bug da Fase 3: o cartão da página inicial levava para `/promocoes/{id}` (404); corrigido e coberto também no PHPUnit.
 
-Na branch `fase-8-exemplos-status` (a partir da `fase-8-producao`, commitada):
+Exemplos em todas as situações e correções (commit `be19213`):
 
 - Página inicial: destaque do título agora é "Concorra a prêmios." (`config/platform.php`; editável em Painel > Configurações).
 - `StatusExamplesSeeder` (roda junto com `db:seed`): uma promoção fictícia em cada situação (rascunho, em breve, aberta, pausada, encerrada pelo admin e pela data, resultado publicado, cancelada) e pedidos em todas as situações, criados pelos próprios serviços do sistema. Para só acrescentar ao banco local: `php artisan db:seed --class=StatusExamplesSeeder`.
@@ -49,13 +49,13 @@ Na branch `fase-8-exemplos-status` (a partir da `fase-8-producao`, commitada):
 - Regra nova: com a promoção pausada ou encerrada, nenhuma cobrança nova é gerada (a página do pedido avisa; Pix já gerado e pago dentro do prazo continua valendo). Avisos do painel e plano da Fase 1 atualizados.
 - Testes novos: exemplo de toda situação existe; todas as telas abrem em todas as situações; o comprador não consegue cancelar, pagar ou alterar dados fora de "aguardando pagamento".
 
-Redefinição de senha nas boas práticas (commitada na branch `fase-8-numeracao`):
+Redefinição de senha nas boas práticas (commit `5820197`):
 
 - O e-mail vem do link e fica travado (somente leitura, com aparência própria). O servidor já recusava trocar a senha de outro e-mail com o link: agora há teste para isso.
 - "Esqueci minha senha" responde igual exista ou não a conta (antes dizia "Não existe nenhum usuário com o e-mail indicado").
 - Redefinir a senha encerra as sessões abertas em outros aparelhos.
 
-Na branch `fase-8-numeracao` (a partir da `fase-8-exemplos-status`, commitada), ação que começou fora do site:
+Ação que começou fora do site (commit `5820197`):
 
 - Promoção tem a numeração da ação inteira (`series_start`/`series_end`, ex.: 0001 a 1000) e a faixa vendida no site (`number_start`/`total_numbers`, ex.: 0501 a 1000). A tela de criação pede primeiro e último número e "Vender no site: todos | só uma faixa". Zeros à esquerda seguem a ação inteira. O site mostra só a sua faixa.
 - Painel > promoção > "Números vendidos fora do site": marca números da faixa do site (ex.: `507, 512, 600-650`) com anotação interna. Usa a mesma trava da reserva (sem conflito com o site); se algum já estiver reservado/vendido, nada é marcado. Contam como vendidos; não entram como pedidos nem no financeiro. Desfazer: Pedidos > origem "Fora do site" > "Desfazer marcação" (só antes do encerramento).
@@ -65,18 +65,18 @@ Na branch `fase-8-numeracao` (a partir da `fase-8-exemplos-status`, commitada), 
 
 ## Situação das fases
 
-| Fase | Situação | Branch / commit |
+| Fase | Situação | Último commit da fase |
 |---|---|---|
-| 1 — Análise e planejamento | Concluída | `fase-1-planejamento` · `a5e780c` |
-| 2 — Ambiente, banco e autenticação | Concluída | `fase-2-base` · `e5c6744` |
-| 3 — Sistema de design e páginas públicas | Concluída | `fase-3-design` · `3c0086f` |
-| 4 — Painel administrativo (Filament) | Concluída | `fase-4-admin` · `d0c6fb3` |
-| 5 — Seleção de números, reserva e checkout | Concluída | `fase-5-checkout` · `72ed127` |
-| 6 — Pagamentos (Asaas: Pix e cartão) | Concluída | `fase-6-pagamentos` · `666eca8` |
-| 7 — Comprovantes, área do participante, e-mails | Concluída | `fase-7-comprovantes` · `d24e663` |
-| 8 — Preparação para produção | **Em andamento** (esperando o SSH da HostGator) | `fase-8-numeracao` · `5820197` |
+| 1 — Análise e planejamento | Concluída | `a5e780c` |
+| 2 — Ambiente, banco e autenticação | Concluída | `e5c6744` |
+| 3 — Sistema de design e páginas públicas | Concluída | `3c0086f` |
+| 4 — Painel administrativo (Filament) | Concluída | `d0c6fb3` |
+| 5 — Seleção de números, reserva e checkout | Concluída | `72ed127` |
+| 6 — Pagamentos (Asaas: Pix e cartão) | Concluída | `666eca8` |
+| 7 — Comprovantes, área do participante, e-mails | Concluída | `d24e663` |
+| 8 — Preparação para produção | **Em andamento** (esperando o SSH da HostGator) | `41d1404` (até agora) |
 
-Cada branch foi criada a partir da anterior. A `main` ainda não tem commits; as fases ficam empilhadas até decidirmos como integrar.
+As fases foram feitas em branches empilhadas, uma a partir da outra, e integradas à `main` em 2026-10-12. Para ver o código ao fim de uma fase: `git switch --detach COMMIT`.
 
 Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan sem erros.
 
