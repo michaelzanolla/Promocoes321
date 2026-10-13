@@ -4,6 +4,7 @@ Plataforma de ações entre amigos: promoções com números, reserva atômica, 
 
 - Especificação: [CONTEXT.md](CONTEXT.md)
 - Arquitetura, modelo de dados e plano: [docs/fase-1-planejamento.md](docs/fase-1-planejamento.md)
+- Manual técnico e de operação (PDF): [docs/manual-promocoes321.pdf](docs/manual-promocoes321.pdf). Fonte em `docs/manual/manual.html`; para gerar de novo: `npm run manual`. Ao mudar configuração, deploy ou painel, atualize o manual junto.
 
 ## Stack
 

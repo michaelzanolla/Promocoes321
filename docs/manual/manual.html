@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Promoções 321 — Manual técnico e de operação</title>
+<style>
+  :root {
+    --papel: #F5F7F8; --cartao: #FFFFFF; --tinta: #12343B; --tinta-suave: #4A6066; --linha: #D3DCDE;
+    --talao: #FFC83D; --talao-claro: #FFF4D6; --carimbo: #B8322A; --carimbo-claro: #FBECEB;
+    --ok: #1D7A4C; --ok-claro: #E6F4EC; --aviso: #845400; --aviso-claro: #FDF3E1;
+  }
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  @page :first { margin: 0; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: 'Archivo', 'Segoe UI', Arial, sans-serif; font-size: 10.2pt; line-height: 1.5; color: var(--tinta); background: #fff; }
+  h1, h2, h3, h4 { font-family: 'Archivo Black', 'Archivo', 'Segoe UI', sans-serif; font-weight: 400; line-height: 1.2; margin: 0; break-after: avoid; }
+  h1 { font-size: 22pt; margin-bottom: 4mm; padding-bottom: 3mm; border-bottom: 3px solid var(--talao); }
+  h2 { font-size: 13.5pt; margin: 7mm 0 2.5mm; }
+  h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+  h4 { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 10.2pt; margin: 4mm 0 1.5mm; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1mm; }
+  li > ul, li > ol { margin-top: 1mm; margin-bottom: 1mm; }
+  a { color: var(--tinta); }
+  code, pre, .num { font-family: 'IBM Plex Mono', Consolas, monospace; }
+  code { font-size: 8.8pt; background: var(--papel); border: 1px solid var(--linha); border-radius: 3px; padding: 0 1.2mm; white-space: nowrap; }
+  pre { font-size: 8.4pt; line-height: 1.45; background: var(--tinta); color: #F5F7F8; border-radius: 4px; padding: 3mm 4mm; margin: 0 0 3.5mm; white-space: pre-wrap; word-break: break-word; break-inside: avoid; }
+  pre code { background: none; border: 0; padding: 0; color: inherit; font-size: inherit; white-space: inherit; }
+  pre .c { color: #9FB3B8; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 4mm; font-size: 9.2pt; break-inside: auto; }
+  tr { break-inside: avoid; }
+  th, td { text-align: left; vertical-align: top; padding: 1.6mm 2.2mm; border-bottom: 1px solid var(--linha); }
+  th { background: var(--papel); font-weight: 700; border-bottom: 2px solid var(--tinta); }
+  td code { white-space: normal; word-break: break-word; }
+  .chapter { break-before: page; }
+  .avoid { break-inside: avoid; }
+  .nota, .alerta, .ok { border-left: 4px solid; border-radius: 0 4px 4px 0; padding: 2.5mm 4mm; margin: 0 0 4mm; break-inside: avoid; }
+  .nota { background: var(--talao-claro); border-color: var(--talao); }
+  .alerta { background: var(--carimbo-claro); border-color: var(--carimbo); }
+  .ok { background: var(--ok-claro); border-color: var(--ok); }
+  .nota p:last-child, .alerta p:last-child, .ok p:last-child, .nota ul:last-child, .alerta ul:last-child { margin-bottom: 0; }
+  .rotulo { font-family: 'IBM Plex Mono', monospace; font-size: 7.6pt; letter-spacing: .12em; text-transform: uppercase; color: var(--tinta-suave); }
+  .tag { display: inline-block; font-size: 8pt; font-weight: 600; padding: 0 1.8mm; border-radius: 99px; border: 1px solid var(--linha); background: var(--papel); white-space: nowrap; }
+  .tag.feito { background: var(--ok-claro); border-color: var(--ok); color: var(--ok); }
+  .tag.falta { background: var(--aviso-claro); border-color: var(--aviso); color: var(--aviso); }
+  .passo { display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; margin-bottom: 3mm; break-inside: avoid; }
+  .passo > .n { font-family: 'IBM Plex Mono', monospace; font-weight: 600; background: var(--talao); border-radius: 50%; width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; font-size: 9pt; }
+  .check { list-style: none; padding-left: 0; }
+  .check li { padding-left: 7mm; position: relative; }
+  .check li::before { content: ''; position: absolute; left: 0; top: 1mm; width: 3.4mm; height: 3.4mm; border: 1.5px solid var(--tinta); border-radius: 2px; }
+
+  /* Capa */
+  .capa { height: 297mm; padding: 28mm 22mm; background: var(--papel); display: flex; flex-direction: column; break-after: page; }
+  .capa .bilhete { margin-top: auto; margin-bottom: auto; background: var(--cartao); border: 1px solid var(--linha); border-radius: 6mm; display: grid; grid-template-columns: 1fr 52mm; overflow: hidden; box-shadow: 0 2mm 6mm rgba(18,52,59,.08); }
+  .capa .corpo { padding: 14mm 12mm; }
+  .capa .canhoto { border-left: 2px dashed var(--linha); padding: 14mm 8mm; display: flex; flex-direction: column; justify-content: space-between; background: var(--talao-claro); }
+  .capa h1 { border: 0; font-size: 30pt; margin: 4mm 0 3mm; padding: 0; }
+  .capa .sub { font-size: 13pt; color: var(--tinta-suave); margin: 0; }
+  .capa .grande { font-family: 'IBM Plex Mono', monospace; font-size: 20pt; font-weight: 600; line-height: 1; }
+  .capa .rodape { color: var(--tinta-suave); font-size: 9pt; }
+  .logo { display: flex; align-items: center; gap: 3mm; font-family: 'Archivo Black', sans-serif; font-size: 13pt; }
+  .logo .icone { width: 9mm; height: 7mm; border: 2px solid var(--tinta); border-radius: 1.5mm; position: relative; }
+  .logo .icone::after { content: ''; position: absolute; right: 2mm; top: 0; bottom: 0; border-left: 2px dashed var(--tinta); }
+
+  /* Sumário */
+  .sumario ol { list-style: none; padding: 0; columns: 2; column-gap: 10mm; }
+  .sumario li { break-inside: avoid; margin-bottom: 2.5mm; }
+  .sumario li b { font-family: 'IBM Plex Mono', monospace; color: var(--tinta-suave); margin-right: 2mm; }
+  .sumario li span { display: block; font-size: 8.6pt; color: var(--tinta-suave); padding-left: 8mm; }
+
+  /* Diagrama de arquitetura */
+  .arq { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 4mm; align-items: stretch; margin: 2mm 0 5mm; break-inside: avoid; }
+  .caixa { border: 1.5px solid var(--tinta); border-radius: 3mm; padding: 3mm; background: #fff; font-size: 8.8pt; }
+  .caixa .t { font-weight: 700; font-size: 9.6pt; margin-bottom: 1mm; }
+  .caixa.central { background: var(--talao-claro); border-color: var(--talao); border-width: 2px; }
+  .caixa ul { padding-left: 4mm; margin: 0; }
+  .col { display: flex; flex-direction: column; gap: 4mm; }
+  .seta { font-family: 'IBM Plex Mono', monospace; font-size: 8pt; color: var(--tinta-suave); }
+
+  /* Fluxos */
+  .fluxo { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5mm; margin: 1mm 0 4mm; break-inside: avoid; }
+  .fluxo .e { border: 1.5px solid var(--tinta); border-radius: 99px; padding: .6mm 3mm; font-size: 8.6pt; font-weight: 600; background: #fff; }
+  .fluxo .e.v { background: var(--ok-claro); border-color: var(--ok); }
+  .fluxo .e.r { background: var(--carimbo-claro); border-color: var(--carimbo); }
+  .fluxo .e.a { background: var(--aviso-claro); border-color: var(--aviso); }
+  .fluxo .s { color: var(--tinta-suave); font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<!-- ============================== CAPA ============================== -->
+<section class="capa">
+  <div class="logo"><span class="icone"></span> Promoções 321</div>
+  <div class="bilhete">
+    <div class="corpo">
+      <div class="rotulo">Ação entre amigos · documentação</div>
+      <h1>Manual técnico e de operação</h1>
+      <p class="sub">Arquitetura, configurações, publicação na HostGator, manutenção do servidor e uso do painel administrativo.</p>
+    </div>
+    <div class="canhoto">
+      <div>
+        <div class="rotulo">Versão</div>
+        <div class="grande">{{DATA_CURTA}}</div>
+      </div>
+      <div>
+        <div class="rotulo">Commit</div>
+        <div class="num" style="font-size:11pt">{{COMMIT}}</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape">
+    Gerado em {{DATA}} a partir de <code>docs/manual/manual.html</code>. Para gerar de novo: <code>npm run manual</code>.<br>
+    Este documento não contém senhas, chaves de API nem tokens. Eles ficam só no <code>.env</code> do servidor e no seu gerenciador de senhas.
+  </div>
+</section>
+
+<!-- ============================== SUMÁRIO ============================== -->
+<section class="sumario">
+  <h1>Sumário</h1>
+  <ol>
+    <li><b>01</b>Visão geral<span>O que o sistema faz, decisões de produto, tecnologias e arquitetura</span></li>
+    <li><b>02</b>Estrutura do código e do banco<span>Pastas principais e tabelas</span></li>
+    <li><b>03</b>Regras de funcionamento<span>Promoção, reserva, pedido, pagamento, comprovante, contas e segurança</span></li>
+    <li><b>04</b>Ambiente de desenvolvimento<span>Instalação no Windows, rodar, testar, sandbox do Asaas</span></li>
+    <li><b>05</b>Configurações<span><code>.env</code> variável por variável, PHP, Apache e painel</span></li>
+    <li><b>06</b>Publicação na HostGator<span>Passo a passo do zero até o site no ar</span></li>
+    <li><b>07</b>Virar a chave para produção<span>Do sandbox para dinheiro real</span></li>
+    <li><b>08</b>Atualizações e volta de versão<span>Deploy de novas versões e rollback</span></li>
+    <li><b>09</b>Backup e restauração<span>Rotina diária, cópia externa e recuperação</span></li>
+    <li><b>10</b>Operação do painel<span>Promoções, pedidos, reembolsos, usuários, auditoria e configurações</span></li>
+    <li><b>11</b>Solução de problemas<span>Sintomas comuns e o que fazer</span></li>
+    <li><b>12</b>Checklist de publicação<span>Tudo o que precisa estar pronto antes de abrir ao público</span></li>
+    <li><b>A</b>Apêndice: comandos e endereços<span>Referência rápida</span></li>
+  </ol>
+</section>
+
+<!-- ============================== 1 ============================== -->
+<section class="chapter">
+  <h1>1. Visão geral</h1>
+  <p>O <b>Promoções 321</b> é uma plataforma de <b>ações entre amigos</b>: o organizador cria promoções com uma faixa de números, os participantes escolhem e reservam números, pagam por Pix ou cartão de crédito pelo Asaas e recebem um comprovante que qualquer pessoa pode conferir pela internet.</p>
+
+  <h2>1.1 Decisões de produto</h2>
+  <table>
+    <tr><th style="width:32%">Decisão</th><th>Consequência</th></tr>
+    <tr><td>Organizador único</td><td>Só o administrador cria promoções. Não há marketplace nem divisão de pagamento entre organizadores. Perfis: <b>Administrador</b> e <b>Participante</b>.</td></tr>
+    <tr><td>Compra sem cadastro</td><td>O cadastro é opcional. O comprador sem conta acessa o pedido pela sessão do navegador, pelo link secreto enviado por e-mail ou pela página "Consultar pedido".</td></tr>
+    <tr><td>Pagamento pelo Asaas</td><td>Pix e cartão de crédito. Os dados do cartão nunca passam pelo site: o comprador paga na fatura hospedada do Asaas.</td></tr>
+    <tr><td>Sorteio fora do sistema</td><td>O sistema não sorteia. O administrador registra o número sorteado e anexa a comprovação (link da live, foto ou PDF da ata).</td></tr>
+    <tr><td>Hospedagem compartilhada</td><td>HostGator plano M (cPanel), sem Node, sem processos permanentes, sem Redis. Tudo roda em PHP com cron de 1 minuto. Os assets são compilados no PC e enviados prontos.</td></tr>
+    <tr><td>E-mail pelo Titan</td><td>O e-mail do domínio está no Titan (não no cPanel). O site envia por <code>smtp.titan.email</code> com a caixa <code>nao-responda@osrv.com.br</code>.</td></tr>
+  </table>
+
+  <h2>1.2 Tecnologias</h2>
+  <table>
+    <tr><th style="width:28%">Camada</th><th>Escolha</th></tr>
+    <tr><td>Linguagem e framework</td><td>PHP 8.3 · Laravel 13</td></tr>
+    <tr><td>Banco de dados</td><td>MySQL 8.0 (InnoDB, utf8mb4). Local no Docker; produção no MySQL da HostGator.</td></tr>
+    <tr><td>Autenticação</td><td>Laravel Fortify + starter kit Livewire (cadastro, login, confirmação de e-mail, recuperação de senha, verificação em duas etapas)</td></tr>
+    <tr><td>Telas de conta</td><td>Livewire 4 + Flux</td></tr>
+    <tr><td>Painel administrativo</td><td>Filament, em <code>/admin</code></td></tr>
+    <tr><td>Páginas públicas</td><td>Blade + Tailwind CSS + Alpine.js (grade de números)</td></tr>
+    <tr><td>PDF do comprovante</td><td>barryvdh/laravel-dompdf (PHP puro)</td></tr>
+    <tr><td>Pagamentos</td><td>API REST v3 do Asaas pelo cliente HTTP do Laravel (sem SDK)</td></tr>
+    <tr><td>Testes</td><td>PHPUnit (≈185 testes), Playwright (ponta a ponta), Pint (formatação), PHPStan (análise estática)</td></tr>
+  </table>
+
+  <h2>1.3 Arquitetura em produção</h2>
+  <div class="arq">
+    <div class="col">
+      <div class="caixa"><div class="t">Navegador</div>Comprador e administrador. Só HTTPS.</div>
+      <div class="caixa"><div class="t">Seu PC (Windows)</div>Compila os assets, monta o pacote e publica com <code>deploy/deploy.sh</code> por SSH.</div>
+    </div>
+    <div class="caixa central">
+      <div class="t">HostGator · cPanel (sh00032)</div>
+      <ul>
+        <li>Subdomínio <b>promocoes.osrv.com.br</b>, raiz em <code>~/promocoes/public</code></li>
+        <li>Apache + PHP 8.3 (lsphp) executando o Laravel</li>
+        <li>MySQL 8.0: banco <code>jonesa50_promocoes</code></li>
+        <li>Cron a cada minuto: <code>schedule:run</code> (expira reservas e concilia pagamentos)</li>
+        <li>Cron diário: backup do banco (7 dias)</li>
+        <li><code>~/promocoes-shared</code>: <code>.env</code>, arquivos enviados, logs, sessões e backups</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="caixa"><div class="t">Asaas (API v3)</div>Cria cobranças Pix/cartão, consulta situação, cancela e reembolsa. Avisa o site pelo webhook <code>/webhooks/asaas</code>.</div>
+      <div class="caixa"><div class="t">Titan (SMTP)</div>E-mails de confirmação de conta, senha, reserva, pagamento e link do pedido.</div>
+    </div>
+  </div>
+  <p class="seta">Fluxo de dinheiro: comprador → Asaas → conta Asaas do organizador. O site nunca toca no dinheiro nem nos dados do cartão; ele só cria cobranças e consulta a situação delas.</p>
+</section>
+
+<!-- ============================== 2 ============================== -->
+<section class="chapter">
+  <h1>2. Estrutura do código e do banco</h1>
+  <h2>2.1 Pastas principais</h2>
+  <table>
+    <tr><th style="width:36%">Caminho</th><th>Conteúdo</th></tr>
+    <tr><td><code>app/Services/</code></td><td>Regras de negócio: <code>ReserveNumbers</code> (reserva atômica), <code>ExpireOrders</code>, <code>CancelOrder</code>, <code>PromotionLifecycle</code> (publicar, pausar, encerrar, resultado, cancelar), <code>AdminMetrics</code>.</td></tr>
+    <tr><td><code>app/Payments/</code></td><td>Integração de pagamento: <code>AsaasGateway</code>, <code>StartPayment</code>, <code>SyncPayment</code>, <code>ReconcilePayments</code>, <code>RefundOrder</code>.</td></tr>
+    <tr><td><code>app/Http/Controllers/</code></td><td>Páginas públicas, escolha de números, pedido, comprovante, consulta de pedido e webhook do Asaas.</td></tr>
+    <tr><td><code>app/Filament/</code></td><td>Painel: recursos de Promoções, Pedidos, Usuários e Auditoria; página Configurações; indicadores do painel de controle.</td></tr>
+    <tr><td><code>app/Policies/</code></td><td>Permissões no servidor (promoções, pedidos, usuários, auditoria).</td></tr>
+    <tr><td><code>app/Console/Commands/CreateAdmin.php</code></td><td>Comando <code>app:create-admin</code>.</td></tr>
+    <tr><td><code>routes/web.php</code>, <code>routes/console.php</code></td><td>Rotas do site; comandos <code>orders:expire</code> e <code>payments:sync</code> e o agendamento deles.</td></tr>
+    <tr><td><code>resources/views/site/</code></td><td>Páginas públicas (Blade).</td></tr>
+    <tr><td><code>resources/content/*.md</code></td><td>Textos legais e institucionais (Sobre, Termos, Privacidade, Cancelamento e reembolso, Regras, Contato). <b>Provisórios</b>, pendentes de revisão jurídica.</td></tr>
+    <tr><td><code>config/platform.php</code></td><td>Valores padrão de responsável, contato e textos da página inicial (sobrescritos pelo painel).</td></tr>
+    <tr><td><code>deploy/</code></td><td><code>deploy.sh</code> (publicação), <code>backup.sh</code> (backup diário), <code>env.production.example</code> (modelo do <code>.env</code>).</td></tr>
+    <tr><td><code>public/.htaccess</code>, <code>.user.ini</code>, <code>php.ini</code></td><td>HTTPS obrigatório, cabeçalhos de segurança e ajustes do PHP da HostGator (versionados de propósito).</td></tr>
+    <tr><td><code>docs/</code></td><td>Planejamento (Fase 1), sistema de design, progresso e este manual.</td></tr>
+    <tr><td><code>tests/</code></td><td>Testes PHPUnit (<code>Feature</code>, <code>Unit</code>, <code>Concurrency</code>) e Playwright (<code>e2e</code>).</td></tr>
+  </table>
+
+  <h2>2.2 Tabelas do banco</h2>
+  <table>
+    <tr><th style="width:28%">Tabela</th><th>Guarda</th></tr>
+    <tr><td><code>users</code></td><td>Contas: nome, e-mail, senha (hash), perfil (<code>role</code>), ativa/inativa, confirmação de e-mail, 2FA.</td></tr>
+    <tr><td><code>promotions</code>, <code>promotion_images</code></td><td>Promoções (conteúdo, numeração, preço, prazos, regras, situação, resultado) e galeria.</td></tr>
+    <tr><td><code>orders</code>, <code>order_items</code></td><td>Pedidos (comprador, total, situação, prazo da reserva, código público, código do comprovante, token do link secreto) e os números de cada pedido. Uma restrição única impede o mesmo número em dois pedidos ativos.</td></tr>
+    <tr><td><code>payments</code>, <code>payment_events</code></td><td>Cobranças no Asaas (ID, forma, valor, situação, Pix copia e cola, fatura) e os avisos recebidos pelo webhook.</td></tr>
+    <tr><td><code>audit_logs</code></td><td>Auditoria das ações administrativas e dos logins (somente leitura).</td></tr>
+    <tr><td><code>settings</code></td><td>Configurações editadas no painel.</td></tr>
+    <tr><td><code>sessions</code>, <code>cache</code>, <code>jobs</code>…</td><td>Infraestrutura do Laravel (sessões e cache ficam no banco na hospedagem).</td></tr>
+  </table>
+  <div class="nota"><p><b>Dados pessoais:</b> o CPF do comprador fica <b>criptografado</b> no banco com a <code>APP_KEY</code> e nunca vai para os logs. Os logs registram códigos de pedido, não dados pessoais.</p></div>
+</section>
+
+<!-- ============================== 3 ============================== -->
+<section class="chapter">
+  <h1>3. Regras de funcionamento</h1>
+
+  <h2>3.1 Situações da promoção</h2>
+  <div class="fluxo">
+    <span class="e">Rascunho</span><span class="s">→ publicar →</span><span class="e a">Em breve</span><span class="s">→ data de início →</span><span class="e v">Aberta</span><span class="s">⇄</span><span class="e a">Pausada</span><span class="s">→</span><span class="e">Encerrada</span><span class="s">→</span><span class="e v">Resultado publicado</span>
+  </div>
+  <table>
+    <tr><th style="width:22%">Situação</th><th>O que acontece</th></tr>
+    <tr><td>Rascunho</td><td>Invisível ao público (o administrador vê em "Ver no site" como prévia). Pode ser excluído se não tiver pedidos.</td></tr>
+    <tr><td>Em breve</td><td>Publicada, mas antes da data de início: aparece no site, sem venda.</td></tr>
+    <tr><td>Aberta</td><td>Aceita reservas e pagamentos.</td></tr>
+    <tr><td>Pausada</td><td>Novas reservas e novas cobranças suspensas. Reservas em andamento valem até o prazo delas; Pix já gerado e pago dentro do prazo é aceito.</td></tr>
+    <tr><td>Encerrada</td><td>Pelo botão ou pela data de encerramento. Ninguém reserva nem gera cobrança nova; Pix já gerado e pago no prazo ainda é aceito.</td></tr>
+    <tr><td>Resultado publicado</td><td>Número sorteado e comprovação visíveis na página pública. Não pode ser alterado.</td></tr>
+    <tr><td>Cancelada</td><td>Irreversível. Reservas abertas são canceladas; pedidos pagos precisam ser reembolsados e o comprovante passa a dizer que não vale mais.</td></tr>
+  </table>
+  <div class="nota"><p><b>Travas:</b> o endereço público (slug) não muda depois da publicação. Preço, numeração e formas de pagamento travam a partir do primeiro pedido. Em produção, a publicação exige a <b>referência legal</b> preenchida, e promoções fictícias não podem ser publicadas.</p></div>
+
+  <h2>3.2 Reserva de números</h2>
+  <ol>
+    <li>A grade consulta a situação dos números a cada 5 segundos, apenas para informar. Quem decide é o servidor.</li>
+    <li><b>Reservar e continuar</b> reserva <b>todos</b> os números escolhidos ou <b>nenhum</b> (transação com trava no banco). Se algum acabou de ser pego, a tela mostra qual. Um teste com ~30 processos simultâneos prova que um número nunca é vendido duas vezes.</li>
+    <li>A reserva dura o <b>prazo da promoção</b> (padrão 15 minutos, de 5 a 1440). Vencida, os números são liberados na hora em que alguém disputa o número e, como limpeza, pelo <code>orders:expire</code> a cada minuto.</li>
+    <li>Limite de <b>3 pedidos aguardando pagamento</b> por pessoa em cada promoção: pela conta, ou pelo IP para quem não tem conta (quem divide o mesmo Wi-Fi divide o limite).</li>
+    <li>Mínimo e máximo de números por pedido são definidos por promoção.</li>
+  </ol>
+
+  <h2>3.3 Situações do pedido</h2>
+  <div class="fluxo">
+    <span class="e a">Aguardando pagamento</span><span class="s">→</span><span class="e a">Pagamento em processamento</span><span class="s">→</span><span class="e v">Confirmado</span><span class="s">→</span><span class="e r">Reembolsado</span>
+  </div>
+  <table>
+    <tr><th style="width:26%">Situação</th><th>Significado</th></tr>
+    <tr><td>Aguardando pagamento</td><td>Números reservados; o comprador informa os dados, escolhe Pix ou cartão e paga dentro do prazo. Pode trocar a forma de pagamento (a cobrança anterior é cancelada no Asaas antes) ou desistir.</td></tr>
+    <tr><td>Pagamento em processamento</td><td>Cartão em análise de risco no Asaas. A reserva fica segura até o Asaas decidir.</td></tr>
+    <tr><td>Confirmado</td><td>Pagamento confirmado pelo Asaas. Gera o comprovante e envia o e-mail.</td></tr>
+    <tr><td>Expirado / Cancelado</td><td>Prazo vencido sem pagamento, desistência do comprador ou cancelamento pelo administrador. Números liberados.</td></tr>
+    <tr><td>Em análise</td><td>Exige ação do administrador: pagamento depois do prazo com número já vendido a outra pessoa, pagamento com a promoção pausada/encerrada/cancelada, pagamento em duplicidade ou contestação de cartão. Números <b>nunca</b> são trocados sozinhos.</td></tr>
+    <tr><td>Reembolsado</td><td>Reembolso confirmado pelo Asaas. O comprovante público passa a dizer "não é mais válido". Os números do pedido <b>não</b> voltam sozinhos para a venda.</td></tr>
+  </table>
+
+  <h2>3.4 Pagamentos</h2>
+  <ul>
+    <li><b>Pix:</b> a página do pedido mostra QR Code, copia e cola, valor e prazo. <b>Cartão:</b> o comprador é levado à fatura do Asaas.</li>
+    <li><b>Confirmação:</b> sempre consultando a cobrança na API do Asaas, conferindo valor e código do pedido. Voltar da fatura não confirma nada. Três caminhos se completam:
+      <ul>
+        <li><b>webhook</b> do Asaas (principal, imediato);</li>
+        <li>a <b>página do pedido</b> consulta o Asaas a cada 8 segundos enquanto está aberta;</li>
+        <li><b>conciliação</b> (<code>payments:sync</code>) a cada minuto pelo cron, que também cancela cobranças de pedidos expirados.</li>
+      </ul>
+    </li>
+    <li><b>Pagamento depois do prazo:</b> se os números ainda estão livres, o pedido é confirmado; se não, vai para <b>Em análise</b> para reembolso.</li>
+    <li><b>Reembolso:</b> só pelo painel; o pedido vira "Reembolsado" quando o Asaas confirma.</li>
+    <li>Cada cobrança cria um cliente novo no Asaas com os dados daquele pedido.</li>
+    <li>O Asaas informa só o <b>dia</b> do pagamento; a hora exata da confirmação fica no pedido e no comprovante.</li>
+  </ul>
+
+  <h2>3.5 Comprovante</h2>
+  <ul>
+    <li>Gerado na confirmação, com um código aleatório.</li>
+    <li><code>/comprovante/{código}</code>: verificação <b>pública</b> com promoção, responsável, pedido, números, valores, forma e situação do pagamento, data da confirmação e QR Code. Nome abreviado ("Maria S."); nunca CPF, e-mail ou telefone.</li>
+    <li><code>/pedido/{código}/comprovante</code>: versão do comprador, com nome completo, impressão e PDF gerado na hora.</li>
+    <li>Tudo vem do banco: alterar o PDF ou o HTML não muda o que a verificação mostra.</li>
+  </ul>
+
+  <h2>3.6 Contas e acesso</h2>
+  <ul>
+    <li><b>Cadastro (opcional):</b> nome, e-mail e senha. Sempre cria um <b>Participante</b>; nenhum formulário aceita o perfil. Telefone e CPF não ficam na conta.</li>
+    <li><b>Vantagens da conta:</b> nome e e-mail preenchidos no pedido, acesso de qualquer aparelho e <b>Minhas compras</b> (pedidos feitos logado e, com e-mail confirmado, os feitos sem conta com o mesmo e-mail).</li>
+    <li><b>Administrador:</b> criado só pelo terminal (<code>app:create-admin</code>) ou promovido por outro administrador em Painel &gt; Usuários.</li>
+    <li><b>Excluir conta:</b> o participante pode excluir a própria conta; pedidos, pagamentos e comprovantes continuam guardados. Administradores não podem se excluir (são desativados).</li>
+    <li><b>Pedido de outra pessoa:</b> quem não tem acesso recebe "página não encontrada", sem confirmar que o código existe.</li>
+  </ul>
+
+  <h2>3.7 Segurança</h2>
+  <table>
+    <tr><th style="width:30%">Proteção</th><th>Como</th></tr>
+    <tr><td>Limites de tentativas</td><td>Login: 5/min por e-mail+IP. Cadastro e recuperação de senha: 10/min por IP. Código 2FA: 5/min. Reserva: 10/min. Páginas do pedido: 30/min. Consulta de pedido: 5/min por IP.</td></tr>
+    <tr><td>Auditoria de login</td><td>Entrada, senha errada (só o e-mail), conta desativada, 2FA errado e bloqueio por excesso.</td></tr>
+    <tr><td>Recuperação de senha</td><td>Resposta igual exista ou não a conta (inclusive no tempo de resposta); redefinir encerra as outras sessões.</td></tr>
+    <tr><td>Consulta de pedido</td><td>O link vai por e-mail; a tela nunca mostra o pedido.</td></tr>
+    <tr><td>Webhook</td><td>Só aceito com o token configurado; token vazio recusa tudo. Avisos repetidos e fora de ordem são tratados; a cobrança é sempre consultada no Asaas antes de agir.</td></tr>
+    <tr><td>Uploads</td><td>Imagens JPG, PNG ou WebP (SVG recusado). Comprovação do sorteio: imagem ou PDF até 5 MB.</td></tr>
+    <tr><td>Servidor</td><td>HTTPS obrigatório (HSTS), <code>nosniff</code>, <code>SAMEORIGIN</code>, cookie de sessão só por HTTPS, <code>APP_DEBUG=false</code>, <code>.env</code> e cache de configuração com permissão 600, código fora do <code>public_html</code>.</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 4 ============================== -->
+<section class="chapter">
+  <h1>4. Ambiente de desenvolvimento</h1>
+  <h2>4.1 Pré-requisitos (Windows)</h2>
+  <table>
+    <tr><th style="width:25%">Ferramenta</th><th>Observações</th></tr>
+    <tr><td>PHP 8.3</td><td><code>winget install PHP.PHP.8.3</code>. Copiar <code>php.ini-development</code> para <code>php.ini</code>, ativar <code>extension_dir = "ext"</code> e as extensões <code>curl, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, sodium, zip</code>. Para HTTPS (Asaas), apontar <code>curl.cainfo</code> e <code>openssl.cafile</code> para um <code>cacert.pem</code> confiável (curl.se). Uploads: <code>upload_max_filesize = 8M</code>, <code>post_max_size = 10M</code>.</td></tr>
+    <tr><td>Composer</td><td>Instalador oficial (getcomposer.org). Nesta máquina: <code>%USERPROFILE%\bin\composer.phar</code>.</td></tr>
+    <tr><td>Node.js 20+</td><td>Compila CSS/JS (<code>npm run build</code>) e roda o Playwright.</td></tr>
+    <tr><td>Docker Desktop</td><td>Roda o MySQL 8.0 local (porta 3307). Precisa estar aberto.</td></tr>
+    <tr><td>Git Bash</td><td>Para <code>deploy.sh</code>, <code>ssh</code> e <code>scp</code>.</td></tr>
+  </table>
+
+  <h2>4.2 Primeira instalação</h2>
+<pre><code>composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+<span class="c"># no .env: defina DB_PASSWORD (qualquer valor, só existe no seu PC)</span>
+docker compose up -d
+php artisan migrate
+php artisan storage:link
+php artisan db:seed          <span class="c"># dados FICTÍCIOS; mostra as senhas geradas só no terminal</span>
+npm run build</code></pre>
+  <p>O <code>db:seed</code> cria <code>admin@demo.test</code> e <code>participante@demo.test</code> com senhas novas a cada execução, promoções fictícias em todas as situações e pedidos de exemplo. Ele se recusa a rodar em produção. Para entrar no painel com o seu e-mail: <code>php artisan app:create-admin seu-email@exemplo.com</code>.</p>
+
+  <h2>4.3 Rodar</h2>
+<pre><code>docker compose up -d
+composer dev                 <span class="c"># ou: php artisan serve  →  http://localhost:8000</span></code></pre>
+  <p>Com <code>MAIL_MAILER=log</code>, os e-mails vão para <code>storage/logs/laravel.log</code>. Sem cron local, a página do pedido aberta já confirma pagamentos; para o resto, rode <code>php artisan payments:sync</code> e <code>php artisan orders:expire</code> quando precisar.</p>
+
+  <h2>4.4 Testes e qualidade</h2>
+<pre><code>composer test                <span class="c"># Pint + PHPStan + PHPUnit</span>
+php artisan test             <span class="c"># só os testes PHP (banco promocoes_test)</span>
+npx playwright install chromium && npm run build && npm run test:e2e</code></pre>
+  <ul>
+    <li>Os testes usam o banco <code>promocoes_test</code>; o banco local <code>promocoes</code> nunca é apagado por eles.</li>
+    <li>Não rode PHPUnit e Playwright ao mesmo tempo (mesmo banco de testes).</li>
+    <li>Se o <code>ConcurrencyTest</code> falhar com <code>CreateProcess failed, error code: 5</code>, o ambiente limitou processos: rode Pint, PHPStan e <code>php artisan test</code> separados.</li>
+  </ul>
+
+  <h2>4.5 Asaas sandbox no PC</h2>
+  <ul>
+    <li>No <code>.env</code>: <code>ASAAS_ENV=sandbox</code> e <code>ASAAS_API_KEY='$aact_...'</code> com <b>aspas simples</b> (a chave começa com <code>$</code>). <code>ASAAS_WEBHOOK_TOKEN</code> vazio (sem endereço público não há webhook).</li>
+    <li><b>Pix:</b> gere o Pix na página do pedido; em sandbox.asaas.com, abra a cobrança e clique em <b>Confirmar pagamento</b>. A página do pedido atualiza sozinha.</li>
+    <li><b>Cartão:</b> na fatura use <code>4444 4444 4444 4444</code>, CVV <code>123</code>, validade futura (a fatura pede reCAPTCHA).</li>
+    <li>O <code>payments:sync</code> local sempre mostra 1 erro: o pagamento fictício <code>pay_demo_…</code> dos exemplos não existe no Asaas. É esperado.</li>
+  </ul>
+</section>
+
+<!-- ============================== 5 ============================== -->
+<section class="chapter">
+  <h1>5. Configurações</h1>
+  <h2>5.1 <code>.env</code> de produção</h2>
+  <p>Fica em <code>~/promocoes-shared/.env</code> com permissão <b>600</b>. O modelo é <code>deploy/env.production.example</code>. Valores já conhecidos desta instalação estão preenchidos abaixo; os segredos ficam marcados como <i>(segredo)</i>.</p>
+  <table>
+    <tr><th style="width:30%">Variável</th><th style="width:30%">Valor</th><th>Observação</th></tr>
+    <tr><td><code>APP_NAME</code></td><td><code>"Promoções 321"</code></td><td>Nome provisório (marca a definir).</td></tr>
+    <tr><td><code>APP_ENV</code></td><td><code>production</code></td><td>Ativa as travas de produção (referência legal, seeder bloqueado).</td></tr>
+    <tr><td><code>APP_KEY</code></td><td><i>(segredo)</i></td><td>Gere no PC: <code>php artisan key:generate --show</code>. Criptografa os CPFs. <b>Guarde no gerenciador de senhas e nunca troque com o sistema em uso.</b></td></tr>
+    <tr><td><code>APP_DEBUG</code></td><td><code>false</code></td><td>Obrigatório: erro não pode mostrar detalhes técnicos.</td></tr>
+    <tr><td><code>APP_URL</code></td><td><code>https://promocoes.osrv.com.br</code></td><td>Usado nos links dos e-mails e do comprovante.</td></tr>
+    <tr><td><code>APP_LOCALE</code></td><td><code>pt_BR</code></td><td></td></tr>
+    <tr><td><code>LOG_STACK</code> / <code>LOG_DAILY_DAYS</code></td><td><code>daily</code> / <code>14</code></td><td>Um arquivo por dia, 14 dias.</td></tr>
+    <tr><td><code>LOG_LEVEL</code></td><td><code>info</code></td><td></td></tr>
+    <tr><td><code>DB_HOST</code> / <code>DB_PORT</code></td><td><code>localhost</code> / <code>3306</code></td><td></td></tr>
+    <tr><td><code>DB_DATABASE</code></td><td><code>jonesa50_promocoes</code></td><td>Criado no cPanel (o cPanel prefixa com o usuário).</td></tr>
+    <tr><td><code>DB_USERNAME</code></td><td><code>jonesa50_promocoes</code></td><td>Usuário exclusivo, privilégios só neste banco.</td></tr>
+    <tr><td><code>DB_PASSWORD</code></td><td><i>(segredo)</i></td><td>Entre aspas duplas.</td></tr>
+    <tr><td><code>SESSION_DRIVER</code> / <code>CACHE_STORE</code></td><td><code>database</code></td><td>Sem Redis na hospedagem.</td></tr>
+    <tr><td><code>SESSION_SECURE_COOKIE</code></td><td><code>true</code></td><td>Cookie só por HTTPS.</td></tr>
+    <tr><td><code>QUEUE_CONNECTION</code></td><td><code>sync</code></td><td>Sem worker; e-mails saem depois da resposta da página.</td></tr>
+    <tr><td><code>MAIL_MAILER</code> / <code>MAIL_SCHEME</code></td><td><code>smtp</code> / <code>smtps</code></td><td></td></tr>
+    <tr><td><code>MAIL_HOST</code> / <code>MAIL_PORT</code></td><td><code>smtp.titan.email</code> / <code>465</code></td><td>Titan.</td></tr>
+    <tr><td><code>MAIL_USERNAME</code></td><td><code>nao-responda@osrv.com.br</code></td><td></td></tr>
+    <tr><td><code>MAIL_PASSWORD</code></td><td><i>(segredo)</i></td><td>Senha da caixa no Titan.</td></tr>
+    <tr><td><code>MAIL_FROM_ADDRESS</code></td><td><code>"nao-responda@osrv.com.br"</code></td><td></td></tr>
+    <tr><td><code>ORGANIZER_*</code>, <code>CONTACT_*</code></td><td>opcional</td><td>Padrões; o que for salvo em Painel &gt; Configurações prevalece.</td></tr>
+    <tr><td><code>ASAAS_ENV</code></td><td><code>sandbox</code> → <code>production</code></td><td>Começa em sandbox; muda só no capítulo 7.</td></tr>
+    <tr><td><code>ASAAS_API_KEY</code></td><td><i>(segredo)</i></td><td>Aspas <b>simples</b>: <code>'$aact_...'</code>. Sandbox e produção têm chaves diferentes.</td></tr>
+    <tr><td><code>ASAAS_WEBHOOK_TOKEN</code></td><td><i>(segredo)</i></td><td>Igual ao token gerado no cadastro do webhook. Vazio = todos os avisos recusados.</td></tr>
+  </table>
+  <div class="alerta"><p><b>Depois de qualquer mudança no <code>.env</code> do servidor</b>, rode <code>cd ~/promocoes &amp;&amp; php artisan optimize</code>: a configuração fica em cache e o site só enxerga a mudança depois disso.</p></div>
+
+  <h2>5.2 PHP e Apache na HostGator</h2>
+  <ul>
+    <li>Versão: <b>PHP 8.3</b> no MultiPHP Manager para o subdomínio.</li>
+    <li>Ajustes em <code>public/.user.ini</code>, <code>public/php.ini</code> e no bloco <code>php8_module</code> do <code>public/.htaccess</code>: <code>upload_max_filesize = 8M</code>, <code>post_max_size = 10M</code>, <code>memory_limit = 512M</code>, <code>max_execution_time = 60</code>, <code>display_errors = Off</code>.</li>
+    <li>Esses arquivos estão <b>no repositório</b> porque o deploy troca a pasta inteira e apagaria o que o MultiPHP INI Editor grava. Para mudar um valor, edite os três no repositório e faça deploy; não use o editor do cPanel.</li>
+    <li><code>public/.htaccess</code> também redireciona tudo para HTTPS (exceto <code>/.well-known/</code>, usado pelo AutoSSL) e envia cabeçalhos de segurança.</li>
+  </ul>
+
+  <h2>5.3 Configurações no painel</h2>
+  <p>Em <b>Painel &gt; Configurações</b>: nome ou razão social do responsável, CPF/CNPJ exibido (só se o jurídico indicar), cidade/UF, e-mail e WhatsApp de contato, e os três textos do topo da página inicial. Aparecem no rodapé, nas páginas de promoção e no comprovante.</p>
+
+  <h2>5.4 Textos legais</h2>
+  <p>Ficam em <code>resources/content/</code> (<code>sobre</code>, <code>termos-de-uso</code>, <code>privacidade</code>, <code>cancelamento-e-reembolso</code>, <code>regras</code>, <code>contato</code>), em Markdown. São <b>provisórios</b> e marcados como pendentes de revisão jurídica. Para trocar: edite o arquivo, faça commit e deploy.</p>
+</section>
+
+<!-- ============================== 6 ============================== -->
+<section class="chapter">
+  <h1>6. Publicação na HostGator</h1>
+  <h2>6.1 Dados desta instalação</h2>
+  <table>
+    <tr><th style="width:32%">Item</th><th>Valor</th></tr>
+    <tr><td>Plano / servidor</td><td>HostGator plano M · <code>sh00032</code></td></tr>
+    <tr><td>Usuário do cPanel</td><td><code>jonesa50</code></td></tr>
+    <tr><td>Endereço do site</td><td><code>https://promocoes.osrv.com.br</code></td></tr>
+    <tr><td>Acesso SSH</td><td>Host <code>promocoes.osrv.com.br</code>, porta <code>2222</code>, chave <code>~/.ssh/hostgator</code>, apelido <code>promocoes</code> no <code>~/.ssh/config</code></td></tr>
+    <tr><td>Banco e usuário MySQL</td><td><code>jonesa50_promocoes</code></td></tr>
+    <tr><td>E-mail de envio</td><td><code>nao-responda@osrv.com.br</code> (Titan)</td></tr>
+    <tr><td>Pastas no servidor</td><td><code>~/promocoes</code> (no ar) · <code>~/promocoes.old</code> (anterior) · <code>~/promocoes-shared</code> (<code>.env</code>, storage, backups)</td></tr>
+  </table>
+
+  <h2>6.2 Situação em {{DATA_CURTA}}</h2>
+  <table>
+    <tr><th>Etapa</th><th style="width:22%">Situação</th></tr>
+    <tr><td>Chave SSH gerada, importada e autorizada no cPanel; <code>~/.ssh/config</code> pronto</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>Subdomínio com raiz <code>promocoes/public</code> e HTTPS (AutoSSL)</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>PHP 8.3 e limites de upload</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>Banco e usuário MySQL</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>Caixa <code>nao-responda@</code> no Titan com SPF, DKIM e DMARC = PASS</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>Shell SSH ativado pela HostGator (chamado aberto)</td><td><span class="tag falta">aguardando</span></td></tr>
+    <tr><td>Passos 6.4 a 6.10</td><td><span class="tag falta">a fazer</span></td></tr>
+  </table>
+
+  <h2>6.3 Preparação já feita (referência para refazer)</h2>
+  <h4>Chave SSH (no Git Bash do PC)</h4>
+<pre><code>ssh-keygen -t ed25519 -f ~/.ssh/hostgator
+<span class="c"># cPanel › Acesso SSH › Gerenciar chaves › Importar: cole ~/.ssh/hostgator.pub e clique em Autorizar</span></code></pre>
+  <p>Arquivo <code>~/.ssh/config</code> no PC:</p>
+<pre><code>Host promocoes
+    HostName promocoes.osrv.com.br
+    User jonesa50
+    Port 2222
+    IdentityFile ~/.ssh/hostgator</code></pre>
+  <h4>cPanel</h4>
+  <ul>
+    <li><b>Banco:</b> Bancos de dados MySQL › criar banco e usuário exclusivos › todos os privilégios só nesse banco.</li>
+    <li><b>Subdomínio:</b> Domínios › criar <code>promocoes.osrv.com.br</code> com raiz <code>promocoes/public</code> (fora do <code>public_html</code>) › SSL/TLS Status › rodar o AutoSSL.</li>
+    <li><b>PHP:</b> MultiPHP Manager › PHP 8.3 para o subdomínio.</li>
+    <li><b>E-mail:</b> criar a caixa no <b>Titan</b> (Portal do Cliente HostGator › E-mails). <b>Não</b> criar conta do mesmo domínio em cPanel › Contas de e-mail (o servidor passaria a entregar localmente). DNS: SPF <code>include:spf.titan.email</code>, DKIM <code>titan1._domainkey</code> e TXT <code>_dmarc</code> = <code>v=DMARC1; p=none;</code>. Teste: enviar do webmail para um Gmail e conferir SPF/DKIM/DMARC = PASS em "Mostrar original".</li>
+  </ul>
+
+  <h2>6.4 Testar o acesso SSH</h2>
+<pre><code>ssh promocoes
+php -v              <span class="c"># precisa ser 8.3</span>
+which mysqldump     <span class="c"># usado pelo backup</span></code></pre>
+  <p>Se <code>php -v</code> não mostrar 8.3, use o caminho completo (geralmente <code>/opt/cpanel/ea-php83/root/usr/bin/php</code>) no lugar de <code>php</code> em todos os comandos no servidor, no cron e no deploy (<code>REMOTE_PHP=/opt/cpanel/ea-php83/root/usr/bin/php bash deploy/deploy.sh promocoes</code>).</p>
+
+  <h2>6.5 Criar o <code>.env</code> do servidor</h2>
+<pre><code><span class="c"># no PC, na raiz do projeto</span>
+php artisan key:generate --show          <span class="c"># copie a chave para o gerenciador de senhas</span>
+ssh promocoes "mkdir -p ~/promocoes-shared &amp;&amp; chmod 700 ~/promocoes-shared"
+scp deploy/env.production.example promocoes:promocoes-shared/.env
+ssh promocoes "chmod 600 ~/promocoes-shared/.env"</code></pre>
+  <p>Edite <code>~/promocoes-shared/.env</code> no servidor (<code>nano</code> ou Gerenciador de arquivos do cPanel) e preencha conforme a tabela 5.1, com o Asaas em <b>sandbox</b>.</p>
+
+  <h2>6.6 Primeiro deploy</h2>
+<pre><code><span class="c"># Git Bash, na raiz do projeto, com tudo commitado</span>
+bash deploy/deploy.sh promocoes</code></pre>
+  <p>O script, no PC: recusa rodar com alterações não commitadas, compila os assets, monta o último commit com as dependências de produção (<code>composer install --no-dev</code>) e envia o pacote. No servidor: descompacta em <code>~/promocoes.new</code>, liga o <code>.env</code> e o <code>storage</code> compartilhados, roda as migrations, troca as pastas (a anterior vira <code>~/promocoes.old</code>), cria o link do storage, gera os caches (<code>optimize</code>) e protege o cache de configuração com permissão 600.</p>
+
+  <h2>6.7 Criar o administrador</h2>
+<pre><code>ssh -t promocoes "cd ~/promocoes &amp;&amp; php artisan app:create-admin seu-email@exemplo.com"</code></pre>
+  <p>Pede nome e senha (a senha não aparece na tela). Se o e-mail já tiver conta, oferece promovê-la. Depois, entre em <code>https://promocoes.osrv.com.br/admin</code> e ative a verificação em duas etapas em Configurações › Segurança.</p>
+
+  <h2>6.8 Cron (cPanel › Trabalhos cron)</h2>
+  <table>
+    <tr><th style="width:26%">Quando</th><th>Comando</th></tr>
+    <tr><td>A cada minuto (<code>* * * * *</code>)</td><td><code>cd ~/promocoes &amp;&amp; php artisan schedule:run &gt; /dev/null 2&gt;&amp;1</code></td></tr>
+    <tr><td>Diário, ex.: 3h (<code>0 3 * * *</code>)</td><td><code>bash ~/promocoes/deploy/backup.sh jonesa50_promocoes</code></td></tr>
+  </table>
+  <p>O primeiro roda <code>orders:expire</code> e <code>payments:sync</code>. Antes do segundo, crie <code>~/promocoes-shared/backup.cnf</code> com permissão 600 (capítulo 9). Configure em Trabalhos cron o e-mail que recebe a saída de falhas.</p>
+
+  <h2>6.9 Webhook do Asaas</h2>
+  <ol>
+    <li>No Asaas (sandbox, por enquanto): Integrações › Webhooks › novo.</li>
+    <li>URL <code>https://promocoes.osrv.com.br/webhooks/asaas</code>, API v3, fila de sincronização <b>ativada</b>, envio <b>sequencial</b>, eventos de <b>cobranças</b> (todos os <code>PAYMENT_*</code>).</li>
+    <li>Clique em <b>Gerar Token</b> e copie o mesmo valor para <code>ASAAS_WEBHOOK_TOKEN</code> no <code>.env</code> do servidor.</li>
+    <li>No servidor: <code>cd ~/promocoes &amp;&amp; php artisan optimize</code>.</li>
+  </ol>
+
+  <h2>6.10 Teste completo no sandbox, já na HostGator</h2>
+  <ul class="check">
+    <li>Criar uma promoção de teste, publicar e conferir a página pública.</li>
+    <li>Reservar números, preencher os dados e gerar o Pix; confirmar no sandbox; ver o pedido confirmado <b>pelo webhook</b> (com a página fechada).</li>
+    <li>Pagar com cartão de teste na fatura; ver a confirmação.</li>
+    <li>Conferir os e-mails recebidos de verdade (reserva, pagamento confirmado, link do pedido) e a caixa de spam.</li>
+    <li>Conferir o comprovante, o PDF e a verificação pública pelo QR Code no celular.</li>
+    <li>Reembolsar um pedido pelo painel e ver "Reembolsado" e o comprovante inválido.</li>
+    <li>Deixar uma reserva vencer e ver os números liberados e a cobrança cancelada no Asaas.</li>
+    <li>Cadastro, confirmação de e-mail e recuperação de senha com um e-mail real.</li>
+    <li>Rodar o backup manualmente uma vez e conferir o arquivo em <code>~/promocoes-shared/backups</code>.</li>
+  </ul>
+</section>
+
+<!-- ============================== 7 ============================== -->
+<section class="chapter">
+  <h1>7. Virar a chave para produção</h1>
+  <div class="alerta"><p>Só depois de <b>todo</b> o checklist do capítulo 12, inclusive a validação jurídica e a confirmação por escrito do Asaas de que a atividade é aceita na conta.</p></div>
+  <div class="passo"><div class="n">1</div><div><b>Zerar os dados de teste (recomendado).</b> Pedidos e pagamentos do sandbox ficariam misturados ao financeiro real, e a conciliação tentaria consultar no Asaas de produção cobranças que só existem no sandbox. Com o site ainda fechado ao público, apague o banco e recrie as tabelas, depois recrie o administrador:
+<pre><code>ssh -t promocoes
+cd ~/promocoes
+bash deploy/backup.sh jonesa50_promocoes      <span class="c"># guarda uma cópia antes</span>
+php artisan migrate:fresh --force              <span class="c"># APAGA TODOS OS DADOS do banco</span>
+php artisan app:create-admin seu-email@exemplo.com</code></pre>
+  Refaça também as Configurações do painel (são guardadas no banco). Imagens enviadas ficam em <code>~/promocoes-shared/storage/app/public</code> e podem ser apagadas à mão.</div></div>
+  <div class="passo"><div class="n">2</div><div><b>Chave de produção.</b> Na conta <b>real</b> do Asaas (asaas.com, não o sandbox): Integrações › gerar chave de API. Se o Asaas permitir, restrinja a chave (sem transferências/saques via API, ou por IP). Ative 2FA na conta.</div></div>
+  <div class="passo"><div class="n">3</div><div><b>Webhook de produção.</b> Repita o 6.9 na conta real, com um <b>token novo</b>.</div></div>
+  <div class="passo"><div class="n">4</div><div><b>Atualizar o <code>.env</code></b>: <code>ASAAS_ENV=production</code>, <code>ASAAS_API_KEY='$aact_...'</code> (produção) e <code>ASAAS_WEBHOOK_TOKEN</code> novo. Conferir <code>APP_DEBUG=false</code>. Depois: <code>php artisan optimize</code>.</div></div>
+  <div class="passo"><div class="n">5</div><div><b>Primeira venda real de baixo valor</b> (ex.: uma promoção interna de R$ 5): pagar por Pix, ver a confirmação e o dinheiro no Asaas, e reembolsar pelo painel.</div></div>
+  <div class="passo"><div class="n">6</div><div><b>Publicar a primeira promoção real</b>, com a referência legal preenchida (obrigatória em produção).</div></div>
+  <div class="nota"><p>Com <code>ASAAS_ENV=production</code> a página do pedido deixa de mostrar o aviso "Ambiente de testes: nenhum dinheiro real é cobrado".</p></div>
+</section>
+
+<!-- ============================== 8 ============================== -->
+<section class="chapter">
+  <h1>8. Atualizações e volta de versão</h1>
+  <h2>8.1 Publicar uma nova versão</h2>
+<pre><code>git switch main
+git pull                        <span class="c"># se houver alterações vindas de outro lugar</span>
+php artisan test                <span class="c"># testes passando</span>
+bash deploy/deploy.sh promocoes</code></pre>
+  <ul>
+    <li>O deploy publica só o que está <b>commitado</b>; ele recusa rodar com alterações pendentes.</li>
+    <li>As migrations rodam com a versão anterior ainda no ar, por isso precisam ser compatíveis com o código antigo (só adicionar colunas/tabelas; remover em uma versão seguinte).</li>
+    <li>O <code>.env</code>, os arquivos enviados, os logs e os backups ficam em <code>~/promocoes-shared</code> e sobrevivem ao deploy.</li>
+    <li>Para manutenção longa: <code>php artisan down</code> antes e <code>php artisan up</code> depois.</li>
+  </ul>
+  <h2>8.2 Voltar para a versão anterior</h2>
+<pre><code>ssh promocoes "mv ~/promocoes ~/promocoes.bad &amp;&amp; mv ~/promocoes.old ~/promocoes &amp;&amp; cd ~/promocoes &amp;&amp; php artisan optimize"</code></pre>
+  <p>As migrations <b>não</b> são desfeitas. Depois de investigar, apague <code>~/promocoes.bad</code>.</p>
+  <h2>8.3 Manutenção periódica</h2>
+  <table>
+    <tr><th style="width:24%">Frequência</th><th>Tarefa</th></tr>
+    <tr><td>Semanal</td><td>Painel: pedidos <b>Em análise</b>; Auditoria: "Login recusado"/"Login bloqueado" em volume.</td></tr>
+    <tr><td>Mensal</td><td>Baixar um backup para fora da HostGator e testar a restauração no PC (capítulo 9). Atualizar o WordPress do mesmo cPanel.</td></tr>
+    <tr><td>Trimestral</td><td>Atualizar dependências no PC (<code>composer update</code>, <code>npm update</code>), rodar <code>composer audit</code>, <code>npm audit</code> e todos os testes, e publicar.</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 9 ============================== -->
+<section class="chapter">
+  <h1>9. Backup e restauração</h1>
+  <h2>9.1 Backup diário</h2>
+  <p>Credenciais em <code>~/promocoes-shared/backup.cnf</code> (permissão 600), nunca na linha do cron:</p>
+<pre><code>[client]
+user=jonesa50_promocoes
+password="SENHA_DO_BANCO"</code></pre>
+  <p>O <code>deploy/backup.sh</code> faz <code>mysqldump --single-transaction</code>, comprime, grava primeiro em arquivo temporário (um dump que falhou nunca substitui um bom) e mantém 7 dias em <code>~/promocoes-shared/backups/jonesa50_promocoes-AAAA-MM-DD.sql.gz</code>.</p>
+  <div class="alerta"><p><b>A <code>APP_KEY</code> faz parte do backup.</b> Sem ela os CPFs dos compradores não podem ser lidos. Guarde-a fora da HostGator (gerenciador de senhas).</p></div>
+
+  <h2>9.2 Cópia externa e teste mensal (no PC, Git Bash, Docker aberto)</h2>
+<pre><code>scp promocoes:promocoes-shared/backups/jonesa50_promocoes-AAAA-MM-DD.sql.gz .
+docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS promocoes_restore; CREATE DATABASE promocoes_restore; GRANT ALL ON promocoes_restore.* TO \`$MYSQL_USER\`@\`%\`"'
+gunzip -c jonesa50_promocoes-AAAA-MM-DD.sql.gz | docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" promocoes_restore'
+<span class="c"># confere se a APP_KEY de produção abre os CPFs (cole a chave; ela não aparece na tela)</span>
+read -rs APP_KEY &amp;&amp; export APP_KEY &amp;&amp; DB_DATABASE=promocoes_restore php artisan tinker --execute="\$c = App\Models\Order::where('source', 'site')->get()->pluck('buyer_cpf')->filter(); echo \$c->count().' CPFs: '.(\$c->every(fn (\$v) => preg_match('/^\d{11}\$/', \$v)) ? 'ok' : 'FALHOU');"</code></pre>
+  <p>Guarde a cópia num lugar fora da HostGator (PC ou nuvem). O procedimento foi ensaiado em 12/10/2026 com contagens e CPFs idênticos aos do banco original.</p>
+
+  <h2>9.3 Restaurar no servidor (perda de dados)</h2>
+<pre><code>cd ~/promocoes &amp;&amp; php artisan down
+gunzip -c ~/promocoes-shared/backups/jonesa50_promocoes-AAAA-MM-DD.sql.gz | mysql --defaults-extra-file=$HOME/promocoes-shared/backup.cnf jonesa50_promocoes
+php artisan up</code></pre>
+  <p>Substitui as tabelas pelas do backup. Pedidos feitos depois do backup se perdem: confira no painel do Asaas as cobranças recebidas desde a data do backup e trate cada uma manualmente.</p>
+</section>
+
+<!-- ============================== 10 ============================== -->
+<section class="chapter">
+  <h1>10. Operação do painel</h1>
+  <p>Endereço: <code>https://promocoes.osrv.com.br/admin</code>. Mesmo login do site (com 2FA, se ativado). Só administradores com conta ativa entram. Toda ação importante fica registrada na Auditoria.</p>
+
+  <h2>10.1 Painel de controle</h2>
+  <ul>
+    <li><b>Promoções:</b> abertas, números vendidos e pagos, números reservados agora.</li>
+    <li><b>Pedidos:</b> confirmados, aguardando pagamento, cancelados ou expirados, <b>em análise</b>.</li>
+    <li><b>Financeiro:</b> recebido (confirmado), faturamento bruto (recebido + reembolsado), reembolsado e pendente (reservas aguardando). Reservas e pendentes <b>nunca</b> contam como receita.</li>
+  </ul>
+
+  <h2>10.2 Criar uma promoção</h2>
+  <table>
+    <tr><th style="width:30%">Seção / campo</th><th>Orientação</th></tr>
+    <tr><td><b>Conteúdo</b>: nome, endereço público, categoria, prêmio, resumo, descrição, imagem, galeria</td><td>O endereço (<code>/promocoes/...</code>) não muda depois de publicar. Resumo aparece no card da página inicial (até 300 caracteres). Imagem JPG/PNG/WebP até 2 MB, proporção 16:10. Na galeria, preencha a descrição da imagem (acessibilidade).</td></tr>
+    <tr><td><b>Números e valores</b>: preço, primeiro e último número da ação</td><td>Ex.: 1 a 1000 (0001–1000) ou 0 a 999 (000–999). Os zeros à esquerda seguem a ação inteira.</td></tr>
+    <tr><td>Vender no site: todos / só uma faixa</td><td>Para ação que começou fora do site: informe a faixa vendida no site (ex.: 501 a 1000). O site mostra só essa faixa.</td></tr>
+    <tr><td>Mínimo e máximo por pedido</td><td>Máximo vazio = sem limite.</td></tr>
+    <tr><td>Prazo da reserva</td><td>Minutos para pagar (5 a 1440; padrão 15).</td></tr>
+    <tr><td>Formas de pagamento</td><td>Pix e/ou cartão. Pix é o recomendado (sem risco de contestação).</td></tr>
+    <tr><td>Permitir números aleatórios</td><td>Mostra o "Sortear para mim" na grade.</td></tr>
+    <tr><td><b>Datas</b>: início e encerramento</td><td>Antes do início, a promoção aparece como "Em breve". No encerramento, fecha sozinha.</td></tr>
+    <tr><td><b>Regras e informações legais</b></td><td>Regras de participação; como o resultado é apurado (data, horário, forma: live, presencial com testemunhas etc.); <b>referência legal</b> (autorização ou parecer jurídico), obrigatória para publicar em produção.</td></tr>
+  </table>
+  <p>Salve como rascunho, use <b>Ver no site</b> para a prévia e depois <b>Publicar</b>.</p>
+
+  <h2>10.3 Ações da promoção</h2>
+  <table>
+    <tr><th style="width:27%">Ação</th><th>Efeito</th></tr>
+    <tr><td>Publicar</td><td>Rascunho fica visível. Preço, numeração e formas de pagamento travam no primeiro pedido.</td></tr>
+    <tr><td>Pausar / Retomar</td><td>Suspende novas reservas e cobranças; reservas em andamento valem até o prazo.</td></tr>
+    <tr><td>Encerrar</td><td>Fecha a venda. Pix já gerado e pago no prazo ainda é aceito.</td></tr>
+    <tr><td>Registrar resultado</td><td>Com a promoção encerrada: número sorteado (qualquer número da ação, inclusive vendido fora do site), arquivo da comprovação (JPG/PNG/WebP/PDF até 5 MB), link (gravação da live, publicação) e observações. Aparece na página pública e <b>não pode ser alterado</b>.</td></tr>
+    <tr><td>Números vendidos fora do site</td><td>Marca números da faixa do site vendidos por fora (ex.: <code>507, 512, 600-650</code>), com anotação interna. Ficam indisponíveis no site e contam como vendidos, mas não entram no financeiro. Se algum já estiver reservado ou vendido, nada é marcado. Desfazer: Pedidos › origem "Fora do site" › Desfazer marcação (antes do encerramento).</td></tr>
+    <tr><td>Duplicar</td><td>Cria um rascunho com o mesmo conteúdo, sem pedidos nem resultado.</td></tr>
+    <tr><td>Cancelar promoção</td><td>Irreversível. Mostra quantos pedidos pagos precisarão ser reembolsados.</td></tr>
+    <tr><td>Excluir rascunho</td><td>Só rascunhos sem pedidos.</td></tr>
+  </table>
+
+  <h2>10.4 Pedidos</h2>
+  <p>Lista com busca por código, nome ou e-mail e filtros por situação, promoção e origem. O detalhe mostra comprador (CPF mascarado), números, aceite das regras, conta no site e as cobranças (forma, situação, valor, situação no Asaas, ID no Asaas, pago em, última consulta).</p>
+  <table>
+    <tr><th style="width:27%">Ação</th><th>Quando usar</th></tr>
+    <tr><td>Ver página do pedido</td><td>Abre a página como o comprador vê.</td></tr>
+    <tr><td>Consultar no Asaas</td><td>Força a atualização da situação (útil se o comprador diz que pagou e o pedido não mudou).</td></tr>
+    <tr><td>Reembolsar</td><td>Pedido confirmado ou em análise com pagamento confirmado. Devolve o valor integral pelo Asaas; o pedido muda quando o Asaas confirma. Os números <b>não</b> voltam sozinhos à venda.</td></tr>
+    <tr><td>Cancelar pedido</td><td>Pedido aguardando pagamento: libera os números; a cobrança em aberto é cancelada pela conciliação.</td></tr>
+    <tr><td>Desfazer marcação</td><td>Pedidos "Fora do site": devolve os números ao site.</td></tr>
+  </table>
+  <h3>Tratando pedidos "Em análise"</h3>
+  <p>O motivo aparece em vermelho no detalhe do pedido.</p>
+  <ul>
+    <li><b>Pago depois do prazo com número já vendido</b> ou <b>pago com a promoção pausada/encerrada/cancelada</b>: reembolsar.</li>
+    <li><b>Pagamento em duplicidade</b>: clicar em Reembolsar (devolve a cobrança mais recente); como a outra continua paga, o pedido volta para "Confirmado" sozinho.</li>
+    <li><b>Contestação de cartão</b>: acompanhar e responder no painel do Asaas.</li>
+  </ul>
+
+  <h2>10.5 Usuários</h2>
+  <ul>
+    <li><b>Criar:</b> nome, e-mail, telefone, perfil. A pessoa recebe um e-mail para definir a própria senha.</li>
+    <li><b>Editar</b> dados e perfil; <b>Ativar/Desativar</b> (desativada não entra e é desconectada). Você não consegue desativar a si mesmo.</li>
+    <li>Usuários não são apagados pelo painel. Cada usuário tem o histórico de atividades.</li>
+  </ul>
+
+  <h2>10.6 Auditoria</h2>
+  <p>Registro somente leitura de ações administrativas (promoções, pedidos, usuários, configurações) e de logins (entrada, senha errada, conta desativada, 2FA errado, bloqueio por excesso de tentativas).</p>
+
+  <h2>10.7 O que o comprador vê</h2>
+  <div class="fluxo">
+    <span class="e">Promoção</span><span class="s">→</span><span class="e">Escolher números</span><span class="s">→</span><span class="e">Reservar</span><span class="s">→</span><span class="e">Dados + aceite</span><span class="s">→</span><span class="e">Pix ou cartão</span><span class="s">→</span><span class="e v">Comprovante</span>
+  </div>
+  <p>E-mails enviados: "números reservados" (ao confirmar os dados, com o link secreto), "pagamento confirmado" e "link do pedido" (pela página Consultar pedido). Falha no envio nunca interrompe o pagamento.</p>
+</section>
+
+<!-- ============================== 11 ============================== -->
+<section class="chapter">
+  <h1>11. Solução de problemas</h1>
+  <table>
+    <tr><th style="width:34%">Sintoma</th><th>Causa provável e solução</th></tr>
+    <tr><td>Página 403 no subdomínio</td><td>Ainda não houve deploy (pasta <code>~/promocoes/public</code> vazia) ou a raiz do subdomínio está errada.</td></tr>
+    <tr><td>Erro 500 logo após o deploy</td><td>Ver <code>~/promocoes-shared/storage/logs/laravel-AAAA-MM-DD.log</code>. Causas comuns: <code>.env</code> incompleto, <code>APP_KEY</code> vazia, senha do banco errada. Corrija e rode <code>php artisan optimize</code>.</td></tr>
+    <tr><td>Mudei o <code>.env</code> e nada mudou</td><td>Configuração em cache: <code>php artisan optimize</code>.</td></tr>
+    <tr><td>Pedido pago continua "Aguardando pagamento"</td><td>Painel › pedido › <b>Consultar no Asaas</b>. Se resolver, verifique o webhook (URL, token igual ao <code>.env</code>, fila do Asaas pausada por falhas) e o cron do <code>schedule:run</code>.</td></tr>
+    <tr><td>Reservas não expiram / cobranças não são canceladas</td><td>Cron do <code>schedule:run</code> parado. Teste no SSH: <code>cd ~/promocoes &amp;&amp; php artisan schedule:run</code>.</td></tr>
+    <tr><td>Webhook recusado (401) no Asaas</td><td>Token diferente do <code>ASAAS_WEBHOOK_TOKEN</code>, ou <code>.env</code> mudado sem <code>optimize</code>. Depois de corrigir, reative a fila no Asaas.</td></tr>
+    <tr><td>E-mails não chegam</td><td>Ver o log do Laravel. Conferir <code>MAIL_*</code>, senha da caixa no Titan e SPF/DKIM/DMARC. Não pode existir conta do mesmo domínio em cPanel › Contas de e-mail.</td></tr>
+    <tr><td>Upload de imagem falha</td><td>Imagens até 2 MB (comprovação até 5 MB). Conferir PHP 8.3 no MultiPHP e os limites em <code>public/.user.ini</code>.</td></tr>
+    <tr><td>"Muitas tentativas" no login</td><td>Limite de 5 por minuto por e-mail+IP. Aguardar 1 minuto.</td></tr>
+    <tr><td>Comprador não acha o pedido</td><td>Página <b>Consultar pedido</b> (código + e-mail) envia o link por e-mail. O administrador vê tudo no painel.</td></tr>
+    <tr><td>Deploy: "Há alterações não commitadas"</td><td>Commit antes; o deploy publica só o que está no git.</td></tr>
+    <tr><td>Deploy quebrou o site</td><td>Volta de versão (8.2) e investigar o log.</td></tr>
+    <tr><td>Local: "Connection refused" no banco</td><td>Abrir o Docker Desktop e <code>docker compose up -d</code>.</td></tr>
+    <tr><td>Local: erro de certificado ao falar com o Asaas</td><td><code>curl.cainfo</code>/<code>openssl.cafile</code> do <code>php.ini</code> sem o <code>cacert.pem</code>. Nunca desligar a verificação SSL.</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 12 ============================== -->
+<section class="chapter">
+  <h1>12. Checklist de publicação</h1>
+  <h2>Antes de trocar <code>ASAAS_ENV</code> para <code>production</code></h2>
+  <ul class="check">
+    <li><b>Validação jurídica</b> do modelo de promoção (rifa/ação entre amigos, autorização, publicidade).</li>
+    <li><b>Textos legais definitivos</b> em <code>resources/content/*.md</code> (termos, privacidade, cancelamento e reembolso, regras).</li>
+    <li><b>Confirmação por escrito do Asaas</b> de que a atividade é aceita na conta (a confirmação já obtida cobre só as formas de pagamento).</li>
+    <li><b>Dados reais do responsável e contato</b> em Painel › Configurações.</li>
+    <li><b>Nome e marca definitivos</b> (<code>APP_NAME</code> e logotipo em <code>resources/views/components/app-logo-icon.blade.php</code>).</li>
+    <li><b>2FA</b> no cPanel, no Asaas e na conta de administrador da plataforma.</li>
+    <li><b>Segurança do login</b> decidida: reforço contra ataque de senha distribuído (recomendado: limite por conta, ex. 20 tentativas erradas por hora, e 2FA obrigatório para administradores).</li>
+    <li><b>WordPress</b> do mesmo cPanel atualizado, sem plugins e temas sem uso.</li>
+    <li><b>Chave de API do Asaas restrita</b>, se o Asaas permitir.</li>
+    <li><b>Teste completo no sandbox dentro da HostGator</b> (6.10), incluindo webhook e e-mails reais.</li>
+    <li><b>Backup diário rodando</b> e uma restauração testada com um backup do servidor.</li>
+    <li><b><code>APP_KEY</code> de produção</b> guardada no gerenciador de senhas.</li>
+    <li><b><code>APP_DEBUG=false</code></b> no <code>.env</code> do servidor.</li>
+  </ul>
+  <h2>Na virada</h2>
+  <ul class="check">
+    <li>Dados de teste zerados e administrador recriado (7, passo 1).</li>
+    <li>Chave de produção e webhook de produção com token novo (7, passos 2 a 4).</li>
+    <li>Primeira venda real de baixo valor, reembolsada (7, passo 5).</li>
+  </ul>
+</section>
+
+<!-- ============================== APÊNDICE ============================== -->
+<section class="chapter">
+  <h1>Apêndice: comandos e endereços</h1>
+  <h2>Comandos do sistema</h2>
+  <table>
+    <tr><th style="width:42%">Comando</th><th>Para quê</th></tr>
+    <tr><td><code>php artisan app:create-admin EMAIL</code></td><td>Cria um administrador ou promove uma conta existente.</td></tr>
+    <tr><td><code>php artisan schedule:run</code></td><td>Executa as tarefas agendadas (cron a cada minuto).</td></tr>
+    <tr><td><code>php artisan orders:expire</code></td><td>Expira reservas vencidas e libera os números.</td></tr>
+    <tr><td><code>php artisan payments:sync</code></td><td>Concilia pagamentos com o Asaas e cancela cobranças de pedidos expirados.</td></tr>
+    <tr><td><code>php artisan optimize</code></td><td>Gera os caches (configuração, rotas, views). Obrigatório após mudar o <code>.env</code>.</td></tr>
+    <tr><td><code>php artisan optimize:clear</code></td><td>Limpa os caches (diagnóstico).</td></tr>
+    <tr><td><code>php artisan down</code> / <code>up</code></td><td>Modo manutenção.</td></tr>
+    <tr><td><code>php artisan migrate --force</code></td><td>Aplica migrations em produção (o deploy já faz).</td></tr>
+    <tr><td><code>php artisan db:seed</code></td><td>Dados fictícios. <b>Só local</b>; recusado em produção.</td></tr>
+    <tr><td><code>bash deploy/deploy.sh promocoes</code></td><td>Publica o último commit (no PC).</td></tr>
+    <tr><td><code>bash ~/promocoes/deploy/backup.sh jonesa50_promocoes</code></td><td>Backup do banco (no servidor).</td></tr>
+    <tr><td><code>npm run manual</code></td><td>Gera este PDF de novo (no PC).</td></tr>
+  </table>
+  <h2>Endereços do site</h2>
+  <table>
+    <tr><th style="width:42%">Caminho</th><th>Página</th></tr>
+    <tr><td><code>/</code></td><td>Página inicial com as promoções</td></tr>
+    <tr><td><code>/promocoes/{endereço}</code></td><td>Detalhes da promoção</td></tr>
+    <tr><td><code>/promocoes/{endereço}/numeros</code></td><td>Grade de números e reserva</td></tr>
+    <tr><td><code>/pedido/{código}</code></td><td>Pedido (dados, pagamento, situação)</td></tr>
+    <tr><td><code>/pedido/{código}/comprovante</code> (<code>.pdf</code>)</td><td>Comprovante do comprador</td></tr>
+    <tr><td><code>/comprovante/{código}</code></td><td>Verificação pública do comprovante</td></tr>
+    <tr><td><code>/consultar-pedido</code></td><td>Recuperar o link do pedido por e-mail</td></tr>
+    <tr><td><code>/dashboard</code></td><td>Minhas compras (logado, e-mail confirmado)</td></tr>
+    <tr><td><code>/settings/profile</code>, <code>/settings/security</code></td><td>Perfil; senha e verificação em duas etapas</td></tr>
+    <tr><td><code>/paginas/{sobre|termos-de-uso|privacidade|cancelamento-e-reembolso|regras|contato}</code></td><td>Textos institucionais e legais</td></tr>
+    <tr><td><code>/admin</code></td><td>Painel administrativo</td></tr>
+    <tr><td><code>/webhooks/asaas</code></td><td>Avisos do Asaas (POST, com token)</td></tr>
+  </table>
+  <h2>Documentos relacionados no repositório</h2>
+  <ul>
+    <li><code>README.md</code>: instalação e roteiro de produção resumidos.</li>
+    <li><code>docs/progresso.md</code>: situação atual, histórico e pendências.</li>
+    <li><code>docs/fase-1-planejamento.md</code>: arquitetura, modelo de dados, riscos e plano de fases.</li>
+    <li><code>docs/design-system.md</code>: cores, tipografia e componentes.</li>
+    <li><code>CONTEXT.md</code>: especificação original do projeto.</li>
+  </ul>
+</section>
+
+</body>
+</html>
