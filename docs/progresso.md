@@ -117,7 +117,7 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 - [x] **Reembolso e cartão** no sandbox real (2026-10-12): cobrança de cartão paga na fatura do Asaas (cartão 4444 4444 4444 4444, CVV 123; a fatura exige reCAPTCHA), confirmada pela conciliação com comprovante e e-mail, depois reembolsada (pedido "reembolsado", comprovante público "não é mais válido"). Cancelamento de cobrança pela conciliação também conferido. O botão Reembolsar do painel chama o mesmo serviço e está coberto pelos testes.
 - [x] Cliente do Asaas: era reaproveitado pelo CPF e a fatura mostrava nome e e-mail de quem já tinha comprado com aquele CPF. Agora cada cobrança cria um cliente com os dados do pedido.
 - [x] O cancelamento da cobrança Pix no Asaas, quando a reserva expira sozinha, acontece pela conciliação (até ~1 minuto depois); conferido no sandbox real em 2026-10-12. Pagamento nesse intervalo cai no fluxo de pagamento tardio, que está tratado.
-- [ ] **Pix pago no sandbox real**: fica para o teste completo na HostGator (o sandbox só confirma Pix pelo botão do painel; recuperar a senha da conta sandbox.asaas.com antes).
+- [x] **Pix pago no sandbox real**: conferido localmente em 2026-10-13 (pedido confirmado pela consulta da página, sem webhook; comprovante, verificação pública, PDF e e-mails ok). O Asaas informa só o dia do pagamento, então o painel mostra "Pago em" só com a data; a hora da confirmação está no pedido e no comprovante. O webhook continua para depois do deploy.
 
 ### Fase 7 — Comprovantes e e-mails
 

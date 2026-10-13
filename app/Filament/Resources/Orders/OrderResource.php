@@ -118,7 +118,8 @@ class OrderResource extends Resource
                     TextEntry::make('amount_cents')->label('Valor')->formatStateUsing(fn (int $state) => Format::brl($state)),
                     TextEntry::make('provider_status')->label('Status no provedor'),
                     TextEntry::make('provider_payment_id')->label('ID no provedor')->copyable(),
-                    TextEntry::make('paid_at')->label('Pago em')->dateTime('d/m/Y H:i')->placeholder('—'),
+                    // O Asaas informa só o dia do pagamento, sem a hora.
+                    TextEntry::make('paid_at')->label('Pago em')->date('d/m/Y')->placeholder('—'),
                     TextEntry::make('last_checked_at')->label('Última consulta')->dateTime('d/m/Y H:i:s')->placeholder('—'),
                     TextEntry::make('failure_reason')->label('Recusa')->placeholder('—')
                         ->visible(fn (Payment $record) => filled($record->failure_reason)),
