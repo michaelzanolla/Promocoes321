@@ -36,11 +36,17 @@ class ConcurrencyTest extends TestCase
     {
         $startAt = microtime(true) + 4; // tempo para todos os processos iniciarem o Laravel
         // ponytail: 30 processos no total por execução; alguns ambientes Windows limitam ~34 filhos por processo.
+        // Os processos usam a mesma conexão do teste (no CI ela vem de variáveis de ambiente, não do .env).
+        $db = config('database.connections.mysql');
         $env = [
             ...array_filter(['PATH' => getenv('PATH'), 'SystemRoot' => getenv('SystemRoot'), 'TEMP' => getenv('TEMP'), 'TMP' => getenv('TMP')]),
             'APP_ENV' => 'testing',
             'DB_CONNECTION' => 'mysql',
-            'DB_DATABASE' => config('database.connections.mysql.database'),
+            'DB_HOST' => $db['host'],
+            'DB_PORT' => (string) $db['port'],
+            'DB_DATABASE' => $db['database'],
+            'DB_USERNAME' => $db['username'],
+            'DB_PASSWORD' => (string) $db['password'],
             'CACHE_STORE' => 'array',
         ];
 
