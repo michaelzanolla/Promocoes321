@@ -24,6 +24,7 @@ use function Illuminate\Support\defer;
  * @property PaymentMethod|null $payment_method
  * @property CarbonImmutable $reserved_until
  * @property CarbonImmutable|null $terms_accepted_at
+ * @property CarbonImmutable|null $confirmed_at
  *
  * O pedido também representa a reserva dos números (reserved_until + status).
  * Sem Fillable: pedidos são criados só pelos serviços do servidor, nunca a partir do request.

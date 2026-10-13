@@ -34,6 +34,7 @@ class AuditLog extends Model
         'promotion.closed' => 'Promoção encerrada',
         'promotion.cancelled' => 'Promoção cancelada',
         'promotion.result_recorded' => 'Resultado registrado',
+        'promotion.buyers_exported' => 'Lista de compradores exportada',
         'settings.updated' => 'Configurações alteradas',
         'order.cancelled' => 'Pedido cancelado pelo painel',
         'order.refund_requested' => 'Reembolso solicitado',

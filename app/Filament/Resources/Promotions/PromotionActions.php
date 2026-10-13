@@ -6,8 +6,10 @@ use App\Enums\OrderStatus;
 use App\Enums\PromotionPhase;
 use App\Enums\PromotionStatus;
 use App\Exceptions\NumbersUnavailable;
+use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\Promotion;
+use App\Services\BuyersReport;
 use App\Services\PromotionLifecycle;
 use App\Services\ReserveNumbers;
 use Closure;
@@ -40,6 +42,7 @@ class PromotionActions
             self::transition('close', 'Encerrar', Heroicon::OutlinedLockClosed, 'gray', [PromotionStatus::Published, PromotionStatus::Paused], 'Promoção encerrada.',
                 'Ninguém mais poderá reservar números nem gerar pagamento. Pix já gerado e pago dentro do prazo da reserva ainda é aceito.'),
             self::recordResult(),
+            self::exportBuyers(),
             self::offlineSales(),
             self::duplicate(),
             self::transition('cancel', 'Cancelar promoção', Heroicon::OutlinedXCircle, 'danger',
@@ -79,6 +82,23 @@ class PromotionActions
                 } catch (DomainException $e) {
                     Notification::make()->danger()->title('Nada foi marcado')->body($e->getMessage())->persistent()->send();
                 }
+            });
+    }
+
+    /** Planilha com cada número pago, nome e telefone do comprador. Fica registrado no histórico (dados pessoais). */
+    public static function exportBuyers(): Action
+    {
+        return Action::make('exportBuyers')->label('Exportar compradores')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
+            ->visible(fn (Promotion $record) => $record->status !== PromotionStatus::Draft)
+            ->action(function (Promotion $record) {
+                $path = tempnam(sys_get_temp_dir(), 'compradores');
+                $count = app(BuyersReport::class)->writeXlsx($record, $path);
+                AuditLog::record('promotion.buyers_exported', $record, ['numeros' => $count]);
+
+                return response()->streamDownload(function () use ($path) {
+                    readfile($path);
+                    @unlink($path);
+                }, 'compradores-'.$record->slug.'-'.now()->format('Y-m-d').'.xlsx');
             });
     }
 
