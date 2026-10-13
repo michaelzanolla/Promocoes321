@@ -1,3 +1,8 @@
+@php
+    // email[]=... no link não pode derrubar a página.
+    $email = is_string(request('email')) ? request('email') : '';
+@endphp
+
 <x-layouts::auth :title="__('Reset password')">
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
@@ -13,12 +18,12 @@
             <!-- E-mail: vem do link e fica travado (o link só vale para esse e-mail; o servidor também confere). -->
             <flux:input
                 name="email"
-                value="{{ request('email') }}"
+                value="{{ $email }}"
                 :label="__('Email')"
                 type="email"
                 required
                 autocomplete="username"
-                :readonly="filled(request('email'))"
+                :readonly="filled($email)"
             />
 
             <!-- Password -->

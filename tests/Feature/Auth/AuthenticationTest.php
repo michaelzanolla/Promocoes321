@@ -48,6 +48,13 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_email_sent_as_a_list_is_rejected_without_error(): void
+    {
+        $this->post(route('login.store'), ['email' => ['x'], 'password' => 'y'])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
     public function test_users_with_two_factor_enabled_are_redirected_to_two_factor_challenge(): void
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());

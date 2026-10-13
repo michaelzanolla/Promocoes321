@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Rules\Cpf;
 use App\Services\ReserveNumbers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -119,6 +120,7 @@ class CheckoutFlowTest extends TestCase
         ['order' => $order, 'token' => $token] = app(ReserveNumbers::class)->reserve($this->promotion, [25], (string) Str::uuid());
 
         $this->get(route('orders.show', [$order->public_code, 't' => 'errado']))->assertNotFound();
+        $this->get(route('orders.show', $order->public_code).'?t[]=x')->assertNotFound();
         $this->get(route('orders.show', [$order->public_code, 't' => $token]))->assertRedirect(route('orders.show', $order->public_code));
         $this->get(route('orders.show', $order->public_code))->assertOk();
     }
@@ -152,6 +154,37 @@ class CheckoutFlowTest extends TestCase
             'buyer_name' => 'Maria', 'buyer_email' => 'maria@example.com', 'buyer_cpf' => '52998224725',
             'payment_method' => 'pix', 'accept_terms' => '1',
         ])->assertSessionHasErrors('order');
+    }
+
+    public function test_identification_checks_open_charges_with_the_order_locked(): void
+    {
+        $order = $this->reserveViaHttp([36]);
+        $locked = false;
+        DB::listen(function ($query) use (&$locked) {
+            $locked = $locked || (str_contains($query->sql, 'from `orders`') && str_contains($query->sql, 'for update'));
+        });
+
+        $this->put(route('orders.identify', $order->public_code), [
+            'buyer_name' => 'Maria', 'buyer_email' => 'maria@example.com', 'buyer_cpf' => '52998224725',
+            'payment_method' => 'pix', 'accept_terms' => '1',
+        ])->assertRedirect(route('orders.show', $order->public_code));
+
+        $this->assertTrue($locked, 'Confirmar dados precisa travar o pedido, como a geração da cobrança.');
+    }
+
+    public function test_ipv6_addresses_in_the_same_block_share_the_open_orders_limit(): void
+    {
+        foreach (['2001:db8:1:2::1', '2001:db8:1:2::2', '2001:db8:1:2:ffff::3'] as $i => $ip) {
+            $this->withServerVariables(['REMOTE_ADDR' => $ip])->postJson(route('numbers.reserve', $this->promotion->slug), [
+                'numbers' => [40 + $i], 'checkout_key' => (string) Str::uuid(),
+            ])->assertOk();
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '2001:db8:1:2::99'])->postJson(route('numbers.reserve', $this->promotion->slug), [
+            'numbers' => [45], 'checkout_key' => (string) Str::uuid(),
+        ])->assertStatus(422)->assertJsonFragment(['message' => 'Você já tem 3 pedidos aguardando pagamento nesta promoção. Pague ou desista de um deles antes de reservar outros números.']);
+
+        $this->assertSame(['2001:db8:1:2::/64'], Order::distinct()->pluck('reserved_ip')->all());
     }
 
     public function test_reservations_are_rate_limited(): void

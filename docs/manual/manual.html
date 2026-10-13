@@ -252,7 +252,8 @@
     <li>A grade consulta a situação dos números a cada 5 segundos, apenas para informar. Quem decide é o servidor.</li>
     <li><b>Reservar e continuar</b> reserva <b>todos</b> os números escolhidos ou <b>nenhum</b> (transação com trava no banco). Se algum acabou de ser pego, a tela mostra qual. Um teste com ~30 processos simultâneos prova que um número nunca é vendido duas vezes.</li>
     <li>A reserva dura o <b>prazo da promoção</b> (padrão 15 minutos, de 5 a 1440). Vencida, os números são liberados na hora em que alguém disputa o número e, como limpeza, pelo <code>orders:expire</code> a cada minuto.</li>
-    <li>Limite de <b>3 pedidos aguardando pagamento</b> por pessoa em cada promoção: pela conta, ou pelo IP para quem não tem conta (quem divide o mesmo Wi-Fi divide o limite).</li>
+    <li>Limite de <b>3 pedidos aguardando pagamento</b> por pessoa em cada promoção: pela conta, ou pelo IP para quem não tem conta (quem divide o mesmo Wi-Fi divide o limite; IPv6 conta pelo bloco /64).</li>
+    <li>Quem compra <b>sem conta</b> pode ter reservada, somando todos, no máximo <b>metade</b> dos números da promoção ao mesmo tempo. Acima disso, o site pede para entrar na conta. Impede que alguém com muitos IPs prenda a promoção inteira.</li>
     <li>Mínimo e máximo de números por pedido são definidos por promoção.</li>
   </ol>
 
@@ -306,7 +307,7 @@
   <h2>3.7 Segurança</h2>
   <table>
     <tr><th style="width:30%">Proteção</th><th>Como</th></tr>
-    <tr><td>Limites de tentativas</td><td>Login: 5/min por e-mail+IP. Cadastro e recuperação de senha: 10/min por IP. Código 2FA: 5/min. Reserva: 10/min. Páginas do pedido: 30/min. Consulta de pedido: 5/min por IP.</td></tr>
+    <tr><td>Limites de tentativas</td><td>Login: 5/min por e-mail+IP. Cadastro e recuperação de senha: 10/min por IP. Código 2FA: 5/min. Reserva: 10/min. Páginas do pedido: 30/min. Consulta de pedido: 5/min por IP. Situação da grade: 300/min por IP. Limites por IP contam IPv6 pelo bloco /64.</td></tr>
     <tr><td>Auditoria de login</td><td>Entrada, senha errada (só o e-mail), conta desativada, 2FA errado e bloqueio por excesso.</td></tr>
     <tr><td>Recuperação de senha</td><td>Resposta igual exista ou não a conta (inclusive no tempo de resposta); redefinir encerra as outras sessões.</td></tr>
     <tr><td>Consulta de pedido</td><td>O link vai por e-mail; a tela nunca mostra o pedido.</td></tr>
@@ -405,7 +406,7 @@ npx playwright install chromium && npm run build && npm run test:e2e</code></pre
     <li>Versão: <b>PHP 8.3</b> no MultiPHP Manager para o subdomínio.</li>
     <li>Ajustes em <code>public/.user.ini</code>, <code>public/php.ini</code> e no bloco <code>php8_module</code> do <code>public/.htaccess</code>: <code>upload_max_filesize = 8M</code>, <code>post_max_size = 10M</code>, <code>memory_limit = 512M</code>, <code>max_execution_time = 60</code>, <code>display_errors = Off</code>.</li>
     <li>Esses arquivos estão <b>no repositório</b> porque o deploy troca a pasta inteira e apagaria o que o MultiPHP INI Editor grava. Para mudar um valor, edite os três no repositório e faça deploy; não use o editor do cPanel.</li>
-    <li><code>public/.htaccess</code> também redireciona tudo para HTTPS (exceto <code>/.well-known/</code>, usado pelo AutoSSL) e envia cabeçalhos de segurança.</li>
+    <li><code>public/.htaccess</code> também redireciona tudo para HTTPS (exceto <code>/.well-known/</code>, usado pelo AutoSSL), envia cabeçalhos de segurança e comprime HTML, CSS, JS e JSON (<code>mod_deflate</code>).</li>
   </ul>
 
   <h2>5.3 Configurações no painel</h2>
@@ -517,13 +518,17 @@ bash deploy/deploy.sh promocoes</code></pre>
 <section class="chapter">
   <h1>7. Virar a chave para produção</h1>
   <div class="alerta"><p>Só depois de <b>todo</b> o checklist do capítulo 12, inclusive a validação jurídica e a confirmação por escrito do Asaas de que a atividade é aceita na conta.</p></div>
-  <div class="passo"><div class="n">1</div><div><b>Zerar os dados de teste (recomendado).</b> Pedidos e pagamentos do sandbox ficariam misturados ao financeiro real, e a conciliação tentaria consultar no Asaas de produção cobranças que só existem no sandbox. Com o site ainda fechado ao público, apague o banco e recrie as tabelas, depois recrie o administrador:
+  <div class="passo"><div class="n">1</div><div><b>Zerar os dados de teste (recomendado).</b> Pedidos e pagamentos do sandbox ficariam misturados ao financeiro real, e a conciliação tentaria consultar no Asaas de produção cobranças que só existem no sandbox. Com o site ainda fechado ao público:
 <pre><code>ssh -t promocoes
 cd ~/promocoes
-bash deploy/backup.sh jonesa50_promocoes      <span class="c"># guarda uma cópia antes</span>
-php artisan migrate:fresh --force              <span class="c"># APAGA TODOS OS DADOS do banco</span>
-php artisan app:create-admin seu-email@exemplo.com</code></pre>
-  Refaça também as Configurações do painel (são guardadas no banco). Imagens enviadas ficam em <code>~/promocoes-shared/storage/app/public</code> e podem ser apagadas à mão.</div></div>
+php artisan down
+bash deploy/backup.sh jonesa50_promocoes      <span class="c"># guarda uma cópia antes</span></code></pre>
+  No cPanel › <b>phpMyAdmin</b>, abra o banco <code>jonesa50_promocoes</code> › aba <b>Estrutura</b> › <b>Marcar todos</b> › <b>Eliminar</b> (DROP) e confirme. Depois, de volta ao SSH:
+<pre><code>php artisan migrate --force                    <span class="c"># recria as tabelas vazias</span>
+php artisan app:create-admin seu-email@exemplo.com
+php artisan optimize
+php artisan up</code></pre>
+  <b>Não use <code>migrate:fresh</code> nem <code>db:wipe</code>:</b> em produção o sistema bloqueia comandos que apagam o banco. Eles só mostram um aviso ("prohibited") e terminam sem apagar nada. Refaça também as Configurações do painel (são guardadas no banco). Imagens enviadas ficam em <code>~/promocoes-shared/storage/app/public</code> e podem ser apagadas à mão.</div></div>
   <div class="passo"><div class="n">2</div><div><b>Chave de produção.</b> Na conta <b>real</b> do Asaas (asaas.com, não o sandbox): Integrações › gerar chave de API. Se o Asaas permitir, restrinja a chave (sem transferências/saques via API, ou por IP). Ative 2FA na conta.</div></div>
   <div class="passo"><div class="n">3</div><div><b>Webhook de produção.</b> Repita o 6.9 na conta real, com um <b>token novo</b>.</div></div>
   <div class="passo"><div class="n">4</div><div><b>Atualizar o <code>.env</code></b>: <code>ASAAS_ENV=production</code>, <code>ASAAS_API_KEY='$aact_...'</code> (produção) e <code>ASAAS_WEBHOOK_TOKEN</code> novo. Conferir <code>APP_DEBUG=false</code>. Depois: <code>php artisan optimize</code>.</div></div>
@@ -674,6 +679,7 @@ php artisan up</code></pre>
     <tr><td>Upload de imagem falha</td><td>Imagens até 2 MB (comprovação até 5 MB). Conferir PHP 8.3 no MultiPHP e os limites em <code>public/.user.ini</code>.</td></tr>
     <tr><td>"Muitas tentativas" no login</td><td>Limite de 5 por minuto por e-mail+IP. Aguardar 1 minuto.</td></tr>
     <tr><td>Comprador não acha o pedido</td><td>Página <b>Consultar pedido</b> (código + e-mail) envia o link por e-mail. O administrador vê tudo no painel.</td></tr>
+    <tr><td>"This command is prohibited from running in this environment"</td><td>Em produção, comandos que apagam o banco (<code>migrate:fresh</code>, <code>migrate:reset</code>, <code>db:wipe</code>, <code>db:seed</code>) são bloqueados de propósito. Para zerar o banco, siga o capítulo 7, passo 1.</td></tr>
     <tr><td>Deploy: "Há alterações não commitadas"</td><td>Commit antes; o deploy publica só o que está no git.</td></tr>
     <tr><td>Deploy quebrou o site</td><td>Volta de versão (8.2) e investigar o log.</td></tr>
     <tr><td>Local: "Connection refused" no banco</td><td>Abrir o Docker Desktop e <code>docker compose up -d</code>.</td></tr>

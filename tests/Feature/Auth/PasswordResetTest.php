@@ -143,6 +143,11 @@ class PasswordResetTest extends TestCase
             ->assertSee('readonly', false);
     }
 
+    public function test_reset_screen_ignores_an_email_sent_as_a_list(): void
+    {
+        $this->get(route('password.reset', 'abc').'?email[]=x')->assertOk()->assertDontSee('readonly', false);
+    }
+
     public function test_password_can_be_reset_with_valid_token(): void
     {
         Notification::fake();

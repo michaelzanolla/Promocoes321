@@ -29,14 +29,18 @@ class AsaasWebhookController extends Controller
         }
 
         $payload = $request->json()->all();
-        $eventId = (string) ($payload['id'] ?? 'sem-id:'.hash('sha256', $request->getContent()));
+        // Campos fora do formato esperado viram "desconhecido" em vez de erro 500 (o Asaas pausa a fila com muitos erros).
+        $text = fn (mixed $value): ?string => is_string($value) || is_int($value) ? (string) $value : null;
+        $eventId = $text($payload['id'] ?? null) ?? 'sem-id:'.hash('sha256', $request->getContent());
+        $chargeId = $text($payload['payment']['id'] ?? null);
 
         try {
             $event = PaymentEvent::forceCreate([
                 'provider' => 'asaas',
                 'provider_event_id' => mb_substr($eventId, 0, 100),
-                'event_type' => mb_substr((string) ($payload['event'] ?? 'UNKNOWN'), 0, 60),
-                'provider_payment_id' => $payload['payment']['id'] ?? null,
+                'event_type' => mb_substr($text($payload['event'] ?? null) ?? 'UNKNOWN', 0, 60),
+                // ID de cobrança maior que a coluna não existe no Asaas: guardar vazio em vez de cortar.
+                'provider_payment_id' => $chargeId !== null && strlen($chargeId) <= 100 ? $chargeId : null,
                 'payload' => $payload,
                 'received_at' => now(),
             ]);

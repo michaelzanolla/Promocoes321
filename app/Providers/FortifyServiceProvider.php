@@ -7,6 +7,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\ClientKey;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -114,12 +115,14 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            // E-mail enviado como lista (email[]=...) não pode derrubar a página: a validação do login o recusa depois.
+            $input = $request->input(Fortify::username());
+            $email = Str::lower(is_string($input) ? $input : '');
+            $throttleKey = Str::transliterate($email.'|'.ClientKey::of($request->ip()));
 
-            return Limit::perMinute(5)->by($throttleKey)->response(function (Request $request, array $headers) use ($throttleKey) {
+            return Limit::perMinute(5)->by($throttleKey)->response(function (Request $request, array $headers) use ($throttleKey, $email) {
                 // Um registro por minuto por e-mail+IP: um robô insistindo não enche a Auditoria.
                 if (Cache::add('audit:login-throttled:'.sha1($throttleKey), true, 60)) {
-                    $email = Str::lower((string) $request->input(Fortify::username()));
                     AuditLog::record('auth.throttled', User::where('email', $email)->first(), ['e-mail' => Str::limit($email, 255, '')]);
                 }
 
@@ -131,7 +134,7 @@ class FortifyServiceProvider extends ServiceProvider
 
         // Aplicado a todas as rotas do Fortify (config/fortify.php): cadastro, recuperação de senha etc.
         RateLimiter::for('auth-forms', function (Request $request) {
-            return $request->isMethod('GET') ? Limit::none() : Limit::perMinute(10)->by($request->ip());
+            return $request->isMethod('GET') ? Limit::none() : Limit::perMinute(10)->by(ClientKey::of($request->ip()));
         });
     }
 }

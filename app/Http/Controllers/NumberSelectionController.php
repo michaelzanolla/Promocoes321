@@ -8,6 +8,7 @@ use App\Exceptions\NumbersUnavailable;
 use App\Models\OrderItem;
 use App\Models\Promotion;
 use App\Services\ReserveNumbers;
+use App\Support\ClientKey;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -65,7 +66,7 @@ class NumberSelectionController extends Controller
         ]);
 
         try {
-            ['order' => $order] = $reserveNumbers->reserve($promotion, $validated['numbers'], $validated['checkout_key'], $request->user(), $request->ip());
+            ['order' => $order] = $reserveNumbers->reserve($promotion, $validated['numbers'], $validated['checkout_key'], $request->user(), ClientKey::of($request->ip()));
         } catch (NumbersUnavailable $e) {
             Cache::forget("promotion:{$promotion->id}:numbers");
 

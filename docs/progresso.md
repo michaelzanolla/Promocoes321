@@ -26,6 +26,11 @@ Docker Desktop aberto, `docker compose up -d` e `php artisan serve` (http://loca
 
 ## Histórico da Fase 8
 
+Teste de estresse e segurança (13/10/2026, relatório em [teste-de-estresse-2026-10-13.md](teste-de-estresse-2026-10-13.md)):
+
+- Corrigidos: corrida entre confirmar dados e gerar Pix (pedido agora travado); IPv6 conta por bloco /64 nos limites; quem compra sem conta pode ter no máximo metade da promoção reservada; erros 500 com campos em lista (link do pedido, login, redefinição de senha, webhook); compressão no `.htaccess`; limite da grade 60 → 300/min por IP; passo do manual que usava `migrate:fresh` (bloqueado em produção).
+- Falta: depois do deploy, conferir se há proxy na frente do site (IP registrado na Auditoria) e se as respostas saem com `Content-Encoding: gzip`.
+
 Primeira parte da Fase 8 (commit `52af1a6`):
 
 - PDF do comprovante conferido; ajustado o espaçamento de "Números confirmados".

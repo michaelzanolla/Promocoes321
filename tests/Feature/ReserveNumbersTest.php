@@ -107,6 +107,27 @@ class ReserveNumbersTest extends TestCase
         $reserve(8, $user, '10.0.0.9');
     }
 
+    public function test_guests_together_can_hold_at_most_half_of_the_promotion(): void
+    {
+        $promotion = $this->promo(['total_numbers' => 10]);
+        $guest = fn (array $numbers, string $ip) => $this->reserve->reserve($promotion, $numbers, (string) Str::uuid(), null, $ip);
+
+        $guest([1, 2, 3], '10.0.0.1');
+        $guest([4, 5], '10.0.0.2');
+        try {
+            $guest([6], '10.0.0.3');
+            $this->fail('Sem conta, ninguém pode passar de metade da promoção reservada.');
+        } catch (DomainException $e) {
+            $this->assertStringContainsString('Entre na sua conta', $e->getMessage());
+        }
+
+        // Quem está logado não entra nessa conta; pedido pago ou vencido libera espaço.
+        $this->reserve->reserve($promotion, [6, 7], (string) Str::uuid(), User::factory()->create());
+        Order::whereNull('user_id')->where('reserved_ip', '10.0.0.2')->update(['status' => OrderStatus::Confirmed]);
+        $guest([8, 9], '10.0.0.3');
+        $this->assertSame(2, Order::whereNull('user_id')->where('status', OrderStatus::AwaitingPayment)->count());
+    }
+
     public function test_paid_cancelled_or_expired_orders_do_not_count_toward_the_limit(): void
     {
         $promotion = $this->promo();

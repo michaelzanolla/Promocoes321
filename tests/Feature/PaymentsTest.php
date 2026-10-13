@@ -167,6 +167,19 @@ class PaymentsTest extends TestCase
         $this->assertSame(0, PaymentEvent::count());
     }
 
+    public function test_webhook_with_unexpected_field_formats_is_stored_without_error(): void
+    {
+        $send = fn (array $body) => $this->postJson(route('webhooks.asaas'), $body, ['asaas-access-token' => 'token-webhook']);
+
+        $send(['id' => ['a'], 'event' => ['x'], 'payment' => ['id' => ['b']]])->assertOk();
+        $send(['id' => 'evt_longo', 'event' => 'PAYMENT_RECEIVED', 'payment' => ['id' => str_repeat('p', 500)]])->assertOk();
+
+        $this->assertSame(2, PaymentEvent::count());
+        $this->assertSame(['UNKNOWN', 'PAYMENT_RECEIVED'], PaymentEvent::orderBy('id')->pluck('event_type')->all());
+        $this->assertSame(0, PaymentEvent::whereNotNull('provider_payment_id')->count());
+        Http::assertNothingSent();
+    }
+
     public function test_webhook_confirms_order_using_the_provider_as_source_of_truth(): void
     {
         $order = $this->identifiedOrder();

@@ -29,7 +29,8 @@ class OrderController extends Controller
 
         // Link secreto do pedido (enviado por e-mail): libera o acesso nesta sessão e limpa a URL.
         if ($request->filled('t')) {
-            abort_unless($order->matchesToken((string) $request->query('t')), 404);
+            $token = $request->query('t');
+            abort_unless(is_string($token) && $order->matchesToken($token), 404);
             $order->grantAccessInSession($request->session());
 
             return redirect()->route('orders.show', $order->public_code);
@@ -44,14 +45,6 @@ class OrderController extends Controller
     {
         $order = Order::where('public_code', $code)->with('promotion')->firstOrFail();
         $this->authorizeAccess($request, $order);
-
-        if (! $order->isPayable()) {
-            return back()->withErrors(['order' => 'Este pedido não aceita mais alterações.']);
-        }
-        // Com cobrança em aberto, a forma de pagamento só muda por changeMethod(), que cancela a cobrança antes.
-        if ($order->payments()->where('status', PaymentStatus::Pending)->exists()) {
-            return back()->withErrors(['order' => 'Os dados não podem ser alterados depois de gerar o pagamento.']);
-        }
 
         $data = $request->validate([
             'buyer_name' => ['required', 'string', 'min:3', 'max:255'],
@@ -71,14 +64,33 @@ class OrderController extends Controller
             'payment_method' => 'forma de pagamento',
         ]);
 
-        $order->forceFill([
-            'buyer_name' => $data['buyer_name'],
-            'buyer_email' => mb_strtolower($data['buyer_email']),
-            'buyer_cpf' => Cpf::digits($data['buyer_cpf']),
-            'buyer_phone' => $data['buyer_phone'] ?? null,
-            'payment_method' => PaymentMethod::from($data['payment_method']),
-            'terms_accepted_at' => now(),
-        ])->save();
+        try {
+            // Mesma trava da geração da cobrança: um "Gerar Pix" simultâneo não pode deixar o pedido
+            // com uma forma de pagamento e a cobrança aberta em outra.
+            $order = DB::transaction(function () use ($order, $data) {
+                $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if (! $order->isPayable()) {
+                    throw new DomainException('Este pedido não aceita mais alterações.');
+                }
+                // Com cobrança em aberto, a forma de pagamento só muda por changeMethod(), que cancela a cobrança antes.
+                if ($order->payments()->where('status', PaymentStatus::Pending)->exists()) {
+                    throw new DomainException('Os dados não podem ser alterados depois de gerar o pagamento.');
+                }
+
+                $order->forceFill([
+                    'buyer_name' => $data['buyer_name'],
+                    'buyer_email' => mb_strtolower($data['buyer_email']),
+                    'buyer_cpf' => Cpf::digits($data['buyer_cpf']),
+                    'buyer_phone' => $data['buyer_phone'] ?? null,
+                    'payment_method' => PaymentMethod::from($data['payment_method']),
+                    'terms_accepted_at' => now(),
+                ])->save();
+
+                return $order;
+            });
+        } catch (DomainException $e) {
+            return back()->withErrors(['order' => $e->getMessage()]);
+        }
 
         $order->sendMailLater(OrderMail::RESERVED);
 

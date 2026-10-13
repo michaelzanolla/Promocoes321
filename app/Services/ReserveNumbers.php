@@ -30,6 +30,12 @@ class ReserveNumbers
     /** Pedidos aguardando pagamento ao mesmo tempo por pessoa (conta ou, sem conta, IP) em cada promoção. */
     public const MAX_OPEN_ORDERS = 3;
 
+    /**
+     * Parte da promoção que pode estar reservada, ao mesmo tempo, por quem compra sem conta.
+     * Impede que alguém com muitos IPs prenda a promoção inteira; quem está logado não entra na conta.
+     */
+    public const GUEST_RESERVED_SHARE = 0.5;
+
     public function __construct(private ExpireOrders $expireOrders) {}
 
     /**
@@ -48,6 +54,9 @@ class ReserveNumbers
         }
 
         $this->ensureOpenOrdersBelowLimit($promotion, $user, $ip);
+        if (! $user) {
+            $this->ensureGuestShareAvailable($promotion, count($numbers));
+        }
 
         $token = Str::random(40);
 
@@ -288,6 +297,23 @@ class ReserveNumbers
         if ($open >= self::MAX_OPEN_ORDERS) {
             throw new DomainException('Você já tem '.self::MAX_OPEN_ORDERS.' pedidos aguardando pagamento nesta promoção. '
                 .'Pague ou desista de um deles antes de reservar outros números.');
+        }
+    }
+
+    /**
+     * ponytail: contado fora da transação; reservas simultâneas podem passar do teto por poucas.
+     */
+    private function ensureGuestShareAvailable(Promotion $promotion, int $count): void
+    {
+        $held = (int) Order::where('promotion_id', $promotion->id)
+            ->where('status', OrderStatus::AwaitingPayment)
+            ->where('reserved_until', '>', now())
+            ->whereNull('user_id')
+            ->sum('quantity');
+
+        if ($held + $count > max(1, (int) floor($promotion->total_numbers * self::GUEST_RESERVED_SHARE))) {
+            throw new DomainException('Muitos números desta promoção estão reservados agora por pessoas sem conta. '
+                .'Entre na sua conta para reservar, ou tente de novo em alguns minutos.');
         }
     }
 
