@@ -15,6 +15,9 @@ new class extends Component {
      */
     public function deleteUser(Logout $logout): void
     {
+        // Administradores são desativados pelo painel, nunca apagados.
+        abort_if(Auth::user()->isAdmin(), 403);
+
         $this->validate([
             'password' => $this->currentPasswordRules(),
         ]);
@@ -31,7 +34,7 @@ new class extends Component {
             <flux:heading size="lg">{{ __('Are you sure you want to delete your account?') }}</flux:heading>
 
             <flux:subheading>
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                Sua conta de acesso será excluída e você sairá do site. Pedidos, pagamentos e comprovantes não são apagados: ficam guardados como registro das compras e continuam acessíveis pelo link enviado por e-mail ou em "Consultar pedido". Se você criar uma nova conta com o mesmo e-mail e confirmá-lo, os pedidos feitos com esse e-mail voltam a aparecer em "Minhas compras". Informe sua senha para confirmar.
             </flux:subheading>
         </div>
 

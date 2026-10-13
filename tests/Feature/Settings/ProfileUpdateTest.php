@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -70,6 +71,37 @@ class ProfileUpdateTest extends TestCase
 
         $this->assertNull($user->fresh());
         $this->assertFalse(auth()->check());
+    }
+
+    public function test_deleting_account_keeps_orders(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user);
+
+        Livewire::test('pages::settings.delete-user-modal')
+            ->set('password', 'password')
+            ->call('deleteUser');
+
+        $this->assertNull($user->fresh());
+        $this->assertNull($order->fresh()->user_id);
+    }
+
+    public function test_admin_cannot_delete_own_account(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin);
+
+        $this->get(route('profile.edit'))->assertOk()->assertDontSee('data-test="delete-user-button"', false);
+
+        Livewire::test('pages::settings.delete-user-modal')
+            ->set('password', 'password')
+            ->call('deleteUser')
+            ->assertForbidden();
+
+        $this->assertNotNull($admin->fresh());
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

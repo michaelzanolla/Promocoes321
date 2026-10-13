@@ -71,8 +71,8 @@ new #[Title('Profile settings')] class extends Component {
     #[Computed]
     public function showDeleteUser(): bool
     {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
+        return ! Auth::user()->isAdmin() && (! Auth::user() instanceof MustVerifyEmail
+            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail()));
     }
 }; ?>
 
