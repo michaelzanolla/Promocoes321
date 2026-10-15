@@ -192,6 +192,7 @@ class PromotionResource extends Resource
 
             Section::make('Regras e informações legais')->components([
                 MarkdownEditor::make('rules')->label('Regras de participação')
+                    ->helperText('A página Regras do site promete que cada promoção informa: como o prêmio é entregue (e quem paga o envio), o prazo para o ganhador reclamar o prêmio e o que acontece se nem todos os números forem vendidos.')
                     ->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList']]),
                 MarkdownEditor::make('draw_info')->label('Como o resultado é apurado')
                     ->helperText('Ex.: data e horário do sorteio, como ele será feito (ao vivo em rede social, presencial com testemunhas etc.) e onde o resultado será divulgado.')

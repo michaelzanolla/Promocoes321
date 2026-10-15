@@ -36,13 +36,13 @@ O que vale é o que aparece na verificação do site. Um PDF ou imagem alterados
 - **Encerrada:** acabou o período de vendas. Ninguém mais reserva números nem gera pagamentos.
 - **Cancelada:** todos os pedidos confirmados são reembolsados, conforme a página de [Cancelamento e reembolso](/paginas/cancelamento-e-reembolso).
 
-Depois da primeira venda, não mudam o valor do número, a quantidade e a faixa de números nem as formas de pagamento. Alterações de texto ficam registradas no histórico interno da plataforma.
+Depois da primeira venda, não mudam o valor do número, a quantidade e a faixa de números nem as formas de pagamento. A data de encerramento pode ser prorrogada ou antecipada pelo responsável; a data válida é sempre a que aparece na página da promoção. Alterações de texto e de datas ficam registradas no histórico interno da plataforma.
 
 ## 6. Resultado e prêmio
 
 O sorteio é feito fora da plataforma, da forma descrita em "Como o resultado é apurado" na página de cada promoção (por exemplo, ao vivo em rede social ou presencialmente). O resultado só é registrado depois que todos os pedidos pendentes da promoção forem resolvidos.
 
-O número sorteado é publicado na página da promoção, junto com a comprovação do sorteio (gravação, publicação, foto ou ata). O responsável entra em contato com o ganhador pelos dados informados no pedido e entrega o prêmio nas condições descritas na página da promoção. Por isso, mantenha seu e-mail e telefone corretos.
+O número sorteado é publicado na página da promoção, junto com a comprovação do sorteio (gravação, publicação, foto ou ata). O responsável entra em contato com o ganhador pelos dados informados no pedido e entrega o prêmio na forma e no prazo descritos na página da promoção. Por isso, mantenha seu e-mail e telefone corretos.
 
 ## 7. Responsabilidades
 
