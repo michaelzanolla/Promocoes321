@@ -205,7 +205,7 @@
     <tr><td><code>app/Console/Commands/CreateAdmin.php</code></td><td>Comando <code>app:create-admin</code>.</td></tr>
     <tr><td><code>routes/web.php</code>, <code>routes/console.php</code></td><td>Rotas do site; comandos <code>orders:expire</code> e <code>payments:sync</code> e o agendamento deles.</td></tr>
     <tr><td><code>resources/views/site/</code></td><td>Páginas públicas (Blade).</td></tr>
-    <tr><td><code>resources/content/*.md</code></td><td>Textos legais e institucionais (Sobre, Termos, Privacidade, Cancelamento e reembolso, Regras, Contato). <b>Provisórios</b>, pendentes de revisão jurídica.</td></tr>
+    <tr><td><code>resources/content/*.md</code></td><td>Textos legais e institucionais (Sobre, Termos, Privacidade, Cancelamento e reembolso, Regras, Contato). Escritos a partir do funcionamento do sistema; <b>aguardam revisão jurídica</b>.</td></tr>
     <tr><td><code>config/platform.php</code></td><td>Valores padrão de responsável, contato e textos da página inicial (sobrescritos pelo painel).</td></tr>
     <tr><td><code>deploy/</code></td><td><code>deploy.sh</code> (publicação), <code>backup.sh</code> (backup diário), <code>env.production.example</code> (modelo do <code>.env</code>).</td></tr>
     <tr><td><code>public/.htaccess</code>, <code>.user.ini</code>, <code>php.ini</code></td><td>HTTPS obrigatório, cabeçalhos de segurança e ajustes do PHP da HostGator (versionados de propósito).</td></tr>
@@ -413,7 +413,7 @@ npx playwright install chromium && npm run build && npm run test:e2e</code></pre
   <p>Em <b>Painel &gt; Configurações</b>: nome ou razão social do responsável, CPF/CNPJ exibido (só se o jurídico indicar), cidade/UF, e-mail e WhatsApp de contato, e os três textos do topo da página inicial. Aparecem no rodapé, nas páginas de promoção e no comprovante.</p>
 
   <h2>5.4 Textos legais</h2>
-  <p>Ficam em <code>resources/content/</code> (<code>sobre</code>, <code>termos-de-uso</code>, <code>privacidade</code>, <code>cancelamento-e-reembolso</code>, <code>regras</code>, <code>contato</code>), em Markdown. São <b>provisórios</b> e marcados como pendentes de revisão jurídica. Para trocar: edite o arquivo, faça commit e deploy.</p>
+  <p>Ficam em <code>resources/content/</code> (<code>sobre</code>, <code>termos-de-uso</code>, <code>privacidade</code>, <code>cancelamento-e-reembolso</code>, <code>regras</code>, <code>contato</code>), em Markdown. Foram escritos a partir do funcionamento real do sistema e têm no topo a faixa "Versão para revisão jurídica", que deve ser removida depois da revisão do advogado. Se uma regra do sistema mudar (prazos, reembolso, dados coletados), atualize o texto correspondente. Para trocar: edite o arquivo, faça commit e deploy.</p>
 </section>
 
 <!-- ============================== 6 ============================== -->
@@ -693,7 +693,7 @@ php artisan up</code></pre>
   <h2>Antes de trocar <code>ASAAS_ENV</code> para <code>production</code></h2>
   <ul class="check">
     <li><b>Validação jurídica</b> do modelo de promoção (rifa/ação entre amigos, autorização, publicidade).</li>
-    <li><b>Textos legais definitivos</b> em <code>resources/content/*.md</code> (termos, privacidade, cancelamento e reembolso, regras).</li>
+    <li><b>Revisão jurídica dos textos legais</b> em <code>resources/content/*.md</code> (termos, privacidade, cancelamento e reembolso, regras).</li>
     <li><b>Confirmação por escrito do Asaas</b> de que a atividade é aceita na conta (a confirmação já obtida cobre só as formas de pagamento).</li>
     <li><b>Dados reais do responsável e contato</b> em Painel › Configurações.</li>
     <li><b>Nome e marca definitivos</b> (<code>APP_NAME</code> e logotipo em <code>resources/views/components/app-logo-icon.blade.php</code>).</li>

@@ -91,7 +91,12 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 
 - [ ] **Validação jurídica** do modelo de promoção (rifa/ação entre amigos, autorização, publicidade). Em produção, o sistema exige a "referência legal" para publicar.
 - [ ] **Confirmar por escrito com o Asaas** que a atividade (rifa/ação entre amigos) é aceita na conta. A pergunta já feita confirmou as formas de pagamento, não a atividade.
-- [ ] **Textos legais definitivos** (termos, privacidade, cancelamento e reembolso, regras): hoje são provisórios, marcados como "pendente de revisão jurídica", em `resources/content/*.md`.
+- [ ] **Revisão jurídica dos textos legais** (termos, privacidade, cancelamento e reembolso, regras em `resources/content/*.md`): reescritos em 15/10/2026 a partir do funcionamento real do sistema (o Rifei serviu só de lista de assuntos), com a faixa "Versão para revisão jurídica" no topo; tirar a faixa depois da revisão. Pontos que o responsável e o advogado precisam confirmar:
+  - arrependimento de 7 dias só até o sorteio (cancelamento, item 2);
+  - pedir o reembolso ao Asaas em até 5 dias úteis (cancelamento, item 4);
+  - guardar pedidos e comprovantes por 5 anos após o encerramento e responder pedidos de titulares em 15 dias (privacidade, itens 5 e 6). **O sistema ainda não apaga nem anonimiza nada sozinho**: criar a rotina antes de vencer o primeiro prazo;
+  - nome do ganhador só divulgado com a concordância dele (privacidade, item 3);
+  - foro do domicílio do participante (termos, item 11).
 - [ ] **Dados do responsável e contato** reais em Painel > Configurações.
 
 ### Segurança do login (validar no final, antes de publicar)
