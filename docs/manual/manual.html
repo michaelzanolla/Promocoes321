@@ -439,8 +439,8 @@ npx playwright install chromium && npm run build && npm run test:e2e</code></pre
     <tr><td>PHP 8.3 e limites de upload</td><td><span class="tag feito">feito</span></td></tr>
     <tr><td>Banco e usuário MySQL</td><td><span class="tag feito">feito</span></td></tr>
     <tr><td>Caixa <code>nao-responda@</code> no Titan com SPF, DKIM e DMARC = PASS</td><td><span class="tag feito">feito</span></td></tr>
-    <tr><td>Shell SSH ativado pela HostGator (chamado aberto)</td><td><span class="tag falta">aguardando</span></td></tr>
-    <tr><td>Passos 6.4 a 6.10</td><td><span class="tag falta">a fazer</span></td></tr>
+    <tr><td>Shell SSH ativado pela HostGator; PHP 8.3 na linha de comando, git e <code>mysqldump</code> 8.0 conferidos (15/10/2026)</td><td><span class="tag feito">feito</span></td></tr>
+    <tr><td>Passos 6.5 a 6.10</td><td><span class="tag falta">a fazer</span></td></tr>
   </table>
 
   <h2>6.3 Preparação já feita (referência para refazer)</h2>
@@ -624,6 +624,7 @@ php artisan up</code></pre>
     <tr><td>Encerrar</td><td>Fecha a venda. Pix já gerado e pago no prazo ainda é aceito.</td></tr>
     <tr><td>Registrar resultado</td><td>Com a promoção encerrada: número sorteado (qualquer número da ação, inclusive vendido fora do site), arquivo da comprovação (JPG/PNG/WebP/PDF até 5 MB), link (gravação da live, publicação) e observações. Aparece na página pública e <b>não pode ser alterado</b>.</td></tr>
     <tr><td>Números vendidos fora do site</td><td>Marca números da faixa do site vendidos por fora (ex.: <code>507, 512, 600-650</code>), com anotação interna. Ficam indisponíveis no site e contam como vendidos, mas não entram no financeiro. Se algum já estiver reservado ou vendido, nada é marcado. Desfazer: Pedidos › origem "Fora do site" › Desfazer marcação (antes do encerramento).</td></tr>
+    <tr><td>Exportar compradores</td><td>Em Mais ações (não aparece em rascunho). Baixa uma planilha Excel (<code>compradores-&lt;promoção&gt;-&lt;data&gt;.xlsx</code>) só com números pagos: pedidos confirmados do site e vendas fora do site (em destaque). Aba "Por comprador": uma linha por e-mail com nome, telefone, quantidade e todos os números. Aba "Por número": uma linha por número com comprador, pedido e data da confirmação. Tem nome, telefone e e-mail: cada exportação fica na Auditoria ("Lista de compradores exportada"). Guarde o arquivo com cuidado e apague quando não precisar mais.</td></tr>
     <tr><td>Duplicar</td><td>Cria um rascunho com o mesmo conteúdo, sem pedidos nem resultado.</td></tr>
     <tr><td>Cancelar promoção</td><td>Irreversível. Mostra quantos pedidos pagos precisarão ser reembolsados.</td></tr>
     <tr><td>Excluir rascunho</td><td>Só rascunhos sem pedidos.</td></tr>
