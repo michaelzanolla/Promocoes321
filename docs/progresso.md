@@ -1,30 +1,37 @@
 # Progresso do projeto
 
-Atualizado em 2026-10-12. Para retomar, leia este arquivo, o [README](../README.md) e o [plano da Fase 1](fase-1-planejamento.md).
+Atualizado em 2026-10-15. Para retomar, leia este arquivo, o [README](../README.md), o manual ([fonte](manual/manual.html), [PDF](manual-promocoes321.pdf)) e o [plano da Fase 1](fase-1-planejamento.md).
 
-## Onde paramos (2026-10-12)
+## Onde paramos (2026-10-15)
 
-**Esperando a HostGator** responder ao chamado que pede a ativação do acesso SSH (shell). Todo o código está commitado; nada pendente na pasta.
+**SSH liberado; falta o primeiro deploy.** Todo o código está na `main`, igual ao GitHub.
 
-- **Branches:** todo o projeto está na `main` (último commit `41d1404`). As branches de cada fase eram empilhadas e viraram a `main` em 2026-10-12, sem merge; depois foram apagadas (os commits de cada fase estão na tabela "Situação das fases"). Cada alteração nova começa numa branch a partir da `main`.
-- **Testes:** 182 PHP + 4 Playwright passando; Pint e PHPStan limpos.
-- **Chamado na HostGator:** aberto em Plano M (cerv.org.br), pedindo ativar o SSH e confirmar porta 2222, o PHP 8.3 da linha de comando e o `mysqldump`. A resposta chega no e-mail do usuário.
-- **Acesso já preparado no PC:** chave `~/.ssh/hostgator` (cadastrada e autorizada no cPanel) e `~/.ssh/config` com o Host `promocoes` (promocoes.osrv.com.br, usuário jonesa50, porta 2222). A autenticação por chave já funcionou; falta só a HostGator ligar o shell.
+- **Repositório:** https://github.com/michaelzanolla/Promocoes321 (privado). Cada alteração nova começa numa branch a partir da `main` e entra por PR; o CI (`.github/workflows/tests.yml`, MySQL 8.0, `ubuntu-24.04`) roda testes, Pint e PHPStan.
+- **Testes:** 195 PHP + 4 Playwright passando (o Playwright não roda no CI).
+- **Servidor (conferido em 2026-10-15):** `ssh promocoes` abre o shell (jailshell). PHP 8.3 na linha de comando, git e `mysqldump` 8.0 presentes. Não há Composer no servidor e não precisa: o `deploy/deploy.sh` roda o Composer no PC. `~/promocoes/public` só tem os arquivos do cPanel; `~/malware.txt` é um relatório antigo da HostGator (fev/2026) sem nenhum arquivo infectado.
 
 ### Roteiro ao retomar
 
-1. Testar o acesso: `ssh promocoes`, depois `php -v` (precisa ser 8.3; se não, usar o caminho completo, ex.: `/opt/cpanel/ea-php83/root/usr/bin/php`) e `which mysqldump`.
-2. ~~No cPanel~~ **Feito em 2026-10-12**: subdomínio com HTTPS válido (responde 403 até o primeiro deploy, porque a pasta está vazia); PHP 8.3 e limites de upload (os arquivos gerados pelo cPanel estão em `public/` para o deploy não apagá-los); banco e usuário MySQL `jonesa50_promocoes`; `nao-responda@osrv.com.br` no **Titan** com SPF, DKIM e DMARC dando PASS no Gmail.
-3. Criar `~/promocoes-shared/.env` a partir de `deploy/env.production.example` (Asaas em **sandbox**), com permissão 600, e guardar a `APP_KEY` fora da HostGator.
+1. ~~Testar o acesso SSH~~ **Feito em 2026-10-15.**
+2. ~~No cPanel~~ **Feito em 2026-10-12**: subdomínio com HTTPS válido (responde 403 até o primeiro deploy); PHP 8.3 e limites de upload (os arquivos gerados pelo cPanel estão em `public/` para o deploy não apagá-los); banco e usuário MySQL `jonesa50_promocoes`; `nao-responda@osrv.com.br` no **Titan** com SPF, DKIM e DMARC dando PASS no Gmail.
+3. Criar `~/promocoes-shared/.env` a partir de `deploy/env.production.example` (Asaas em **sandbox**), com permissão 600, e guardar a `APP_KEY` fora da HostGator. O usuário precisa informar: senha do banco, senha do e-mail no Titan, chave do Asaas sandbox e o e-mail do administrador.
 4. Primeiro deploy: `bash deploy/deploy.sh promocoes`; depois `php artisan app:create-admin` no servidor.
-5. Cron (schedule:run a cada minuto e backup diário), webhook do Asaas e um teste completo no sandbox. Tudo está no README, seção Produção.
-6. No final, antes de publicar: pendências da seção "Pendências" abaixo, incluindo **Segurança do login** e os itens jurídicos e do Asaas.
+5. Cron (schedule:run a cada minuto e backup diário), webhook do Asaas, um teste completo no sandbox e a conferência de proxy e gzip (veja "Histórico da Fase 8"). Tudo está no README, seção Produção, e no manual, capítulo 6.
+6. Preencher Painel > Configurações com os dados do responsável e do contato.
+7. No final, antes de publicar: pendências da seção "Pendências" abaixo, incluindo **Segurança do login** e os itens jurídicos e do Asaas.
 
 ### Ambiente local
 
 Docker Desktop aberto, `docker compose up -d` e `php artisan serve` (http://localhost:8000). O banco local tem promoções fictícias em todas as situações e um exemplo de ação iniciada fora do site. Para entrar no painel, crie seu administrador com `php artisan app:create-admin seu-email`.
 
 ## Histórico da Fase 8
+
+Documentação, GitHub e textos legais (13 a 15/10/2026):
+
+- Manual técnico e de uso do painel em PDF: fonte `docs/manual/manual.html`, gerado por `npm run manual` em `docs/manual-promocoes321.pdf`. Ao mudar configuração, deploy ou painel, atualizar o manual e gerar de novo.
+- Repositório no GitHub com CI (PR #1: MySQL 8.0 nos testes; commit `5e712d8`: runner fixo em `ubuntu-24.04`).
+- **Exportar compradores** (commit `4a7717f`): em Promoção › Mais ações, baixa um XLSX só com números pagos (pedidos confirmados e vendas fora do site), com as abas "Por comprador" e "Por número". Cada exportação fica na Auditoria. Não dá para repetir o cabeçalho na impressão: o openspout não põe aspas no nome da aba com espaço.
+- Textos legais reescritos a partir do funcionamento do sistema (PRs #3 e #4), com a faixa "Versão para revisão jurídica". Rifei e Rifeme serviram só como lista de assuntos.
 
 Teste de estresse e segurança (13/10/2026, relatório em [teste-de-estresse-2026-10-13.md](teste-de-estresse-2026-10-13.md)):
 
