@@ -113,6 +113,7 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 
 ### Identidade e conteúdo
 
+- [ ] Apresentação do organizador na página Sobre (`resources/content/sobre.md`, primeiro parágrafo): hoje é um texto genérico. Trocar por 2 a 4 frases do responsável: quem organiza, de onde, desde quando e por quê.
 - [ ] Nome e marca definitivos: "Promoções 321" e o logotipo de bilhete são provisórios (`APP_NAME`, `resources/views/components/app-logo-icon.blade.php`).
 - [x] E-mails com as cores do site: faixa amarela, quadro do pedido e botão amarelos (`resources/views/vendor/mail/html/themes/default.css`). Logotipo em imagem fica para quando a marca for definitiva.
 
