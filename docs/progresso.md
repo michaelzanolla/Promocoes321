@@ -122,7 +122,7 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 
 ### Fase 5 — Reserva e checkout
 
-- [ ] `composer test` falha no `ConcurrencyTest` **só neste ambiente** (limite de ~34 processos por comando). Rodar `php artisan test` separado do Pint/PHPStan. Na máquina do usuário deve funcionar.
+- [x] `composer test` falha no `ConcurrencyTest` só no ambiente do Claude (limite de ~34 processos por comando); ali, rodar `php artisan test` separado do Pint e do PHPStan. Não é defeito do projeto: o CI do GitHub roda tudo e passa.
 - [x] Grade de números: navegação por setas do teclado (feito na Fase 8).
 - [x] No máximo 3 pedidos aguardando pagamento por pessoa em cada promoção (pela conta ou, sem conta, pelo IP; `ReserveNumbers::MAX_OPEN_ORDERS`). Quem compartilha IP (Wi-Fi, operadora móvel) divide esse limite; se reclamarem, aumentar o número.
 - [x] Troca de forma de pagamento (Pix ↔ cartão) na página do pedido, só com a promoção aberta. A cobrança em aberto é cancelada no Asaas antes da troca; se o cancelamento falhar, nada muda. Conferido no sandbox real em 2026-10-12.
@@ -139,14 +139,14 @@ Situação dos testes ao final da Fase 7: 144 testes passando, Pint e PHPStan se
 ### Fase 7 — Comprovantes e e-mails
 
 - [x] PDF do comprovante conferido (Fase 8).
-- [ ] SMTP de produção não configurado (Fase 8). Em desenvolvimento os e-mails vão para `storage/logs/laravel.log`.
+- [x] SMTP de produção: `nao-responda@osrv.com.br` no Titan com SPF, DKIM e DMARC conferidos (2026-10-12). Falta só a senha no `.env` do servidor, no primeiro deploy. Em desenvolvimento os e-mails vão para `storage/logs/laravel.log`.
 
 ## Escopo da Fase 8 — Preparação para produção
 
 Hospedagem: HostGator plano M (cPanel), PHP 8.3, MySQL 8.0, subdomínio no mesmo cPanel do WordPress.
 
-1. **Acesso**: cadastrar chave SSH no cPanel e testar o acesso.
-2. **Subdomínio** com raiz em `promocoes/public` (código fora de `public_html`); SSL pelo AutoSSL.
+1. ~~**Acesso**: cadastrar chave SSH no cPanel e testar o acesso.~~ Feito (shell liberado em 2026-10-15).
+2. ~~**Subdomínio** com raiz em `promocoes/public` (código fora de `public_html`); SSL pelo AutoSSL.~~ Feito em 2026-10-12.
 3. **Deploy**:
    - código via git;
    - `composer install --no-dev --optimize-autoloader` (publica os arquivos do Filament);
